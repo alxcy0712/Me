@@ -66,6 +66,74 @@ for source_name, output_name in (
 ):
     shutil.copy2(SOURCE_ASSET_DIR / source_name, OUTPUT_DIR / output_name)
 
+
+def split_motion_sprite(source_name, front_name, sprite_name, moving_mask, crop):
+    source = np.array(Image.open(OUTPUT_DIR / source_name).convert("RGBA"))
+    alpha = source[:, :, 3] >= MIN_ALPHA
+    moving = alpha & moving_mask
+
+    front = source.copy()
+    front[moving] = 0
+
+    sprite = np.zeros_like(source)
+    sprite[moving] = source[moving]
+    left, top, right, bottom = crop
+
+    crop_mask = np.zeros_like(moving)
+    crop_mask[top:bottom, left:right] = True
+    assert not np.any(moving & ~crop_mask)
+
+    reconstructed = front.copy()
+    reconstructed[moving] = sprite[moving]
+    assert np.array_equal(reconstructed, source)
+
+    Image.fromarray(front, "RGBA").save(
+        OUTPUT_DIR / front_name,
+        "WEBP",
+        lossless=True,
+        method=6,
+    )
+    Image.fromarray(sprite[top:bottom, left:right], "RGBA").save(
+        OUTPUT_DIR / sprite_name,
+        "WEBP",
+        lossless=True,
+        method=6,
+    )
+
+
+grid_y, grid_x = np.ogrid[: CANVAS_SIZE[1], : CANVAS_SIZE[0]]
+
+# Keep every horizontal shaft and bearing surface fixed. Only the photographed
+# wheel, STATE drum, and OUTPUT lattice move inside tight apertures.
+split_motion_sprite(
+    "input-rotor.webp",
+    "input-core-front.webp",
+    "input-rotor-cycle.webp",
+    grid_x < 248,
+    (168, 204, 252, 316),
+)
+
+state_drum = ((grid_x - 529) / 34) ** 2 + ((grid_y - 258) / 64) ** 2 <= 1
+split_motion_sprite(
+    "state-core-clean.webp",
+    "state-core-front.webp",
+    "state-rotor-cycle.webp",
+    state_drum,
+    (495, 190, 574, 326),
+)
+
+output_shaft = ((grid_x <= 789) & (np.abs(grid_y - 259) <= 12)) | (
+    ((grid_x - 789) / 28) ** 2 + ((grid_y - 259) / 29) ** 2 <= 1
+)
+split_motion_sprite(
+    "output-core-clean.webp",
+    "output-core-front.webp",
+    "output-rotor-cycle.webp",
+    ~output_shaft,
+    (676, 139, 901, 379),
+)
+
+
 # The clean mechanism cores already own every visible shaft section. Fill only
 # the ten-pixel RULES→STATE gap by interpolating their matching edge texture.
 rules_core = np.array(

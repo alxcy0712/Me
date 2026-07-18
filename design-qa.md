@@ -323,3 +323,34 @@ Comparison setup:
 - P2: none.
 
 final result: passed
+
+## Pass 21 — four-stage internal mechanism cycles
+
+Comparison setup:
+
+- Selected visual direction: `design/world-compiler-expanded.png`.
+- Accepted support-free expanded baseline: `design/audit-v9-bottom-occlusion/07-fixed-expanded.jpg`.
+- Desktop motion frames: `design/qa-v11-motion-expanded.png` and `design/qa-v11-motion-expanded-b.png`.
+- Compact reassembly result: `design/qa-v11-motion-compact.png`.
+- Mobile expanded result: `design/qa-v11-motion-mobile.png`.
+- Source/current comparison: `design/qa-v11-motion-reference-comparison.png`.
+- Baseline/current comparison: `design/qa-v11-motion-baseline-comparison.png`.
+- Two-frame motion evidence: `design/qa-v11-motion-contact-sheet.png`.
+- Browser viewports and states: 1280×720 desktop compact/expanded/reassembled, plus 390×844 mobile expanded.
+
+- P2 resolved: the previous RULES motion used 3.2°/-4.96° over 6.4 seconds and read as nearly static at normal page scale. The final counter-rotating cycle uses 8°/-12.4° over 3.8 seconds. Its one-second crop changes 12.76% of pixels above a three-level threshold with a 4.551/255 mean grayscale delta.
+- INPUT, STATE, and OUTPUT now use independent photographed motion sprites behind fixed front layers. INPUT runs a 10° flywheel cycle over 5.8 seconds, STATE runs a -6.5° front-drum cycle over 8.2 seconds, and OUTPUT runs a 5.8° lattice-sphere cycle over 10.4 seconds.
+- The asset builder partitions each source into a fixed front and a tight rotating crop, asserts that every moving pixel is inside its crop, and asserts exact source reconstruction at the neutral phase. Horizontal shafts, bearings, labels, glass frames, and support-free lower rails stay fixed.
+- All five computed transforms changed during a 500ms desktop sample, with the two RULES matrices moving in opposite directions. The one-second visual samples measured INPUT 6.30%, RULES 12.76%, STATE 6.50%, and OUTPUT 29.66% changed pixels in their focused regions.
+- Mechanism playback ramps with a smoother-step envelope from opening progress 0.45 through 0.79. This keeps the spring-led part separation readable before the internal cycles reach full speed.
+- Reassembly settled at `data-expanded=false`, `data-moving=false`, and `data-mechanisms-active=false`. All five mechanism transforms remained byte-identical across a subsequent 400ms compact sample.
+- A 90ms opening reversal retained the intermediate spring state and settled cleanly back to the compact endpoint. Scrolling to y=1147 paused all five cycles through the intersection gate; their transforms remained byte-identical across 450ms offscreen.
+- Page visibility, asset readiness, viewport intersection, and `prefers-reduced-motion` gate the shared playback lifecycle. The browser environment reported reduced motion as false; source review confirms that the media-change path jumps to the selected endpoint and pauses every mechanism.
+- The 390×844 expanded layout has a 358×430 interaction region, a 390px document width, and zero horizontal overflow. All five mechanism transforms changed during the mobile sample.
+- All 22 machine images decoded at natural dimensions. Browser warning/error logs were empty after a cold reload, and the compact/expanded screenshots show clean glass apertures, fixed shafts, continuous casing geometry, and unchanged editorial typography.
+- The first visual check exposed a stale stylesheet cache that enlarged the OUTPUT sphere. The entry-module, lazy-module, stylesheet, asset, and mask cache keys now advance together. A second visual check raised RULES from 6.2°/-9.6° to the final 8°/-12.4° cycle for clearer normal-scale legibility.
+- P0: none.
+- P1: none.
+- P2: none.
+
+final result: passed

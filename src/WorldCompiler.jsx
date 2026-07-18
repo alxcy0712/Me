@@ -2,7 +2,7 @@ import { MouseSimple } from "@phosphor-icons/react";
 import { useLayoutEffect, useRef, useState } from "react";
 
 const PART_ROOT = "/world-compiler/parts-v4";
-const partAsset = (name) => `${PART_ROOT}/${name}?v=20260718-10`;
+const partAsset = (name) => `${PART_ROOT}/${name}?v=20260718-11`;
 const LAYERS = {
   backplateLeft: partAsset("backplate-left.webp"),
   backplateRight: partAsset("backplate-right.webp"),
@@ -10,9 +10,11 @@ const LAYERS = {
   casingRight: partAsset("casing-right.webp"),
   inputFrame: partAsset("input-frame.webp"),
   inputGuide: partAsset("input-guide.webp"),
-  inputRotor: partAsset("input-rotor.webp"),
-  outputCore: partAsset("output-core-clean.webp"),
+  inputFront: partAsset("input-core-front.webp"),
+  inputRotor: partAsset("input-rotor-cycle.webp"),
+  outputCore: partAsset("output-core-front.webp"),
   outputFrame: partAsset("output-frame.webp"),
+  outputRotor: partAsset("output-rotor-cycle.webp"),
   rock: partAsset("rock.webp"),
   rulesFront: partAsset("rules-core-front.webp"),
   rulesFrame: partAsset("rules-frame.webp"),
@@ -21,16 +23,16 @@ const LAYERS = {
   rulesGearOuter: partAsset("rules-gear-outer.webp"),
   rulesGearOuterMask: partAsset("rules-gear-outer-mask.webp"),
   shaft: partAsset("shaft.webp"),
-  stateCore: partAsset("state-core-clean.webp"),
+  stateCore: partAsset("state-core-front.webp"),
   stateFrame: partAsset("state-frame.webp"),
+  stateRotor: partAsset("state-rotor-cycle.webp"),
 };
 
 const CANVAS_WIDTH = 936;
 const CANVAS_HEIGHT = 660;
 const TIMELINE_DURATION = 1000;
 const SPRING_FREQUENCY = 7.5;
-const GEAR_DURATION = 6400;
-const GEAR_SAMPLE_COUNT = 17;
+const MECHANISM_SAMPLE_COUNT = 17;
 const SAMPLE_POINTS = [0, 0.04, 0.1, 0.18, 0.28, 0.4, 0.54, 0.68, 0.8, 0.9, 1];
 
 const PARTS = [
@@ -54,7 +56,8 @@ const PARTS = [
   },
   {
     name: "input-rotor",
-    src: LAYERS.inputRotor,
+    src: LAYERS.inputFront,
+    rotor: { name: "input", src: LAYERS.inputRotor },
     origin: [201, 263],
     z: 30,
     from: { x: 131, y: 60, scale: 0.68 },
@@ -82,6 +85,7 @@ const PARTS = [
   {
     name: "state-core",
     src: LAYERS.stateCore,
+    rotor: { name: "state", src: LAYERS.stateRotor },
     origin: [585, 257],
     z: 34,
     from: { x: -85, y: 65, scaleX: 0.72, scaleY: 0.65 },
@@ -91,6 +95,7 @@ const PARTS = [
   {
     name: "output-core",
     src: LAYERS.outputCore,
+    rotor: { name: "output", src: LAYERS.outputRotor },
     origin: [788, 258],
     z: 36,
     from: { x: -218, y: 62, scale: 0.72 },
@@ -132,6 +137,39 @@ const PARTS = [
     from: { x: -231, y: 68, scale: 0.68 },
     to: { x: 0, y: 55 },
     range: [0.08, 0.92],
+  },
+];
+
+const MECHANISM_CYCLES = [
+  {
+    selector: '[data-mechanism="input"]',
+    amplitude: 10,
+    aspect: 0.58,
+    duration: 5800,
+  },
+  {
+    selector: '[data-mechanism="rules-outer"]',
+    amplitude: 8,
+    aspect: 0.5,
+    duration: 3800,
+  },
+  {
+    selector: '[data-mechanism="rules-inner"]',
+    amplitude: -12.4,
+    aspect: 35 / 68,
+    duration: 3800,
+  },
+  {
+    selector: '[data-mechanism="state"]',
+    amplitude: -6.5,
+    aspect: 0.52,
+    duration: 8200,
+  },
+  {
+    selector: '[data-mechanism="output"]',
+    amplitude: 5.8,
+    aspect: 0.94,
+    duration: 10400,
   },
 ];
 
@@ -220,9 +258,9 @@ function maskFrames() {
   });
 }
 
-function gearFrames(amplitude, aspect) {
-  return Array.from({ length: GEAR_SAMPLE_COUNT }, (_, index) => {
-    const offset = index / (GEAR_SAMPLE_COUNT - 1);
+function rotorFrames(amplitude, aspect) {
+  return Array.from({ length: MECHANISM_SAMPLE_COUNT }, (_, index) => {
+    const offset = index / (MECHANISM_SAMPLE_COUNT - 1);
     const angle = amplitude * Math.sin(Math.PI * 2 * offset);
 
     return {
@@ -270,8 +308,9 @@ function partStyle(part) {
 export default function WorldCompiler({ hint, expandedHint }) {
   const sceneRef = useRef(null);
   const animationsRef = useRef([]);
-  const gearAnimationsRef = useRef([]);
-  const gearSpeedRef = useRef(-1);
+  const mechanismAnimationsRef = useRef([]);
+  const mechanismsActiveRef = useRef(false);
+  const mechanismSpeedRef = useRef(-1);
   const assetsReadyRef = useRef(false);
   const inViewportRef = useRef(false);
   const pageVisibleRef = useRef(true);
@@ -289,17 +328,22 @@ export default function WorldCompiler({ hint, expandedHint }) {
   const [expanded, setExpanded] = useState(false);
   const [moving, setMoving] = useState(false);
 
-  const syncGearPlayback = (progress = motionRef.current.progress) => {
-    const speed = smootherstep((progress - 0.18) / 0.5);
+  const syncMechanismPlayback = (progress = motionRef.current.progress) => {
+    const speed = smootherstep((progress - 0.45) / 0.34);
     const canRun =
       assetsReadyRef.current &&
       inViewportRef.current &&
       pageVisibleRef.current &&
       !reducedMotionRef.current &&
       speed > 0.001;
-    const speedChanged = Math.abs(gearSpeedRef.current - speed) > 0.0001;
+    const speedChanged = Math.abs(mechanismSpeedRef.current - speed) > 0.0001;
 
-    gearAnimationsRef.current.forEach((animation) => {
+    if (mechanismsActiveRef.current !== canRun) {
+      mechanismsActiveRef.current = canRun;
+      sceneRef.current?.setAttribute("data-mechanisms-active", String(canRun));
+    }
+
+    mechanismAnimationsRef.current.forEach((animation) => {
       if (!canRun) {
         animation.pause();
         return;
@@ -308,7 +352,7 @@ export default function WorldCompiler({ hint, expandedHint }) {
       if (speedChanged) animation.updatePlaybackRate(speed);
       if (animation.playState !== "running") animation.play();
     });
-    if (canRun && speedChanged) gearSpeedRef.current = speed;
+    if (canRun && speedChanged) mechanismSpeedRef.current = speed;
   };
 
   const renderProgress = (progress) => {
@@ -316,7 +360,7 @@ export default function WorldCompiler({ hint, expandedHint }) {
     animationsRef.current.forEach((animation) => {
       animation.currentTime = currentTime;
     });
-    syncGearPlayback(progress);
+    syncMechanismPlayback(progress);
   };
 
   const startSpring = () => {
@@ -398,7 +442,7 @@ export default function WorldCompiler({ hint, expandedHint }) {
     assetsReadyRef.current = false;
     inViewportRef.current = false;
     pageVisibleRef.current = document.visibilityState !== "hidden";
-    gearSpeedRef.current = -1;
+    mechanismSpeedRef.current = -1;
     const images = [...scene.querySelectorAll("img")];
 
     animationsRef.current = MOTION_EFFECTS.flatMap(({ selector, keyframes }) => {
@@ -415,42 +459,35 @@ export default function WorldCompiler({ hint, expandedHint }) {
       return animation;
     });
 
-    gearAnimationsRef.current = [
-      {
-        selector: '[data-gear="outer"]',
-        keyframes: gearFrames(3.2, 0.5),
-      },
-      {
-        selector: '[data-gear="inner"]',
-        keyframes: gearFrames(-4.96, 35 / 68),
-      },
-    ].flatMap(({ selector, keyframes }) => {
-      const element = scene.querySelector(selector);
-      if (!element) return [];
+    mechanismAnimationsRef.current = MECHANISM_CYCLES.flatMap(
+      ({ selector, amplitude, aspect, duration }) => {
+        const element = scene.querySelector(selector);
+        if (!element) return [];
 
-      const animation = element.animate(keyframes, {
-        duration: GEAR_DURATION,
-        easing: "linear",
-        iterations: Infinity,
-      });
-      animation.pause();
-      animation.currentTime = 0;
-      return animation;
-    });
+        const animation = element.animate(rotorFrames(amplitude, aspect), {
+          duration,
+          easing: "linear",
+          iterations: Infinity,
+        });
+        animation.pause();
+        animation.currentTime = 0;
+        return animation;
+      },
+    );
 
     Promise.all(images.map((image) => image.decode())).then(
       () => {
         if (!cancelled) {
           assetsReadyRef.current = true;
           setAssetState("ready");
-          syncGearPlayback();
+          syncMechanismPlayback();
         }
       },
       () => {
         if (!cancelled) {
           assetsReadyRef.current = false;
           setAssetState("error");
-          syncGearPlayback();
+          syncMechanismPlayback();
         }
       },
     );
@@ -458,7 +495,7 @@ export default function WorldCompiler({ hint, expandedHint }) {
     const observer = new IntersectionObserver(
       ([entry]) => {
         inViewportRef.current = entry.isIntersecting && entry.intersectionRatio >= 0.1;
-        syncGearPlayback();
+        syncMechanismPlayback();
       },
       { threshold: 0.1 },
     );
@@ -466,7 +503,7 @@ export default function WorldCompiler({ hint, expandedHint }) {
 
     const updatePageVisibility = () => {
       pageVisibleRef.current = document.visibilityState !== "hidden";
-      syncGearPlayback();
+      syncMechanismPlayback();
     };
     updatePageVisibility();
     document.addEventListener("visibilitychange", updatePageVisibility);
@@ -483,7 +520,7 @@ export default function WorldCompiler({ hint, expandedHint }) {
         setMoving(false);
         renderProgress(motion.progress);
       }
-      syncGearPlayback();
+      syncMechanismPlayback();
     };
 
     updateMotionPreference();
@@ -497,9 +534,11 @@ export default function WorldCompiler({ hint, expandedHint }) {
       if (motion.frame) cancelAnimationFrame(motion.frame);
       animationsRef.current.forEach((animation) => animation.cancel());
       animationsRef.current = [];
-      gearAnimationsRef.current.forEach((animation) => animation.cancel());
-      gearAnimationsRef.current = [];
-      gearSpeedRef.current = -1;
+      mechanismAnimationsRef.current.forEach((animation) => animation.cancel());
+      mechanismAnimationsRef.current = [];
+      mechanismsActiveRef.current = false;
+      mechanismSpeedRef.current = -1;
+      scene.removeAttribute("data-mechanisms-active");
       observer.disconnect();
       document.removeEventListener("visibilitychange", updatePageVisibility);
       media.removeEventListener("change", updateMotionPreference);
@@ -589,13 +628,38 @@ export default function WorldCompiler({ hint, expandedHint }) {
                 {part.name === "rules-core" ? (
                   <>
                     <span className="machine-gear-window machine-gear-window-outer">
-                      <span className="machine-gear-rotor" data-gear="outer">
+                      <span
+                        className="machine-cycle-rotor"
+                        data-mechanism="rules-outer"
+                      >
                         <img src={LAYERS.rulesGearOuter} alt="" draggable="false" />
                       </span>
                     </span>
                     <span className="machine-gear-window machine-gear-window-inner">
-                      <span className="machine-gear-rotor" data-gear="inner">
+                      <span
+                        className="machine-cycle-rotor"
+                        data-mechanism="rules-inner"
+                      >
                         <img src={LAYERS.rulesGearInner} alt="" draggable="false" />
+                      </span>
+                    </span>
+                    <img
+                      className="machine-part-front"
+                      src={part.src}
+                      alt=""
+                      draggable="false"
+                    />
+                  </>
+                ) : part.rotor ? (
+                  <>
+                    <span
+                      className={`machine-rotor-window machine-rotor-window-${part.rotor.name}`}
+                    >
+                      <span
+                        className="machine-cycle-rotor"
+                        data-mechanism={part.rotor.name}
+                      >
+                        <img src={part.rotor.src} alt="" draggable="false" />
                       </span>
                     </span>
                     <img
