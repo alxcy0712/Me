@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.DS_Store
+.npmrc
+__pycache__/
+*.py[cod]
+*.log
+.env
+.env.*
+!.env.example
+
+# Local visual iteration captures
+design/*-v2.png
+design/*-v3.png
+design/prototype-collapsed-sequence.png
+design/prototype-collapsed.png
+design/prototype-expanded.png
+design/prototype-mobile.png
+design/qa-comparison-collapsed.png
+design/qa-comparison-expanded.png
