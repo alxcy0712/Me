@@ -226,8 +226,11 @@ def main() -> None:
     assert not np.any(approved_delta[~keyed_marker]), (
         "approved INPUT mother changes pixels outside the positioning mark"
     )
-    assert 900 <= int(np.count_nonzero(marker_core)) <= 1150, (
+    assert 50 <= int(np.count_nonzero(marker_core)) <= 100, (
         "unexpected 4x INPUT positioning-mark area"
+    )
+    assert 250 <= int(np.count_nonzero(marker)) <= 320, (
+        "unexpected feathered INPUT positioning-mark area"
     )
     assert np.all(detail_4x[:, :, 3][marker_core] >= 185), (
         "INPUT positioning mark is not fully owned by the moving detail"
@@ -236,14 +239,15 @@ def main() -> None:
         approved_4x[:, :, :3].astype(np.float32)
         @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
     )
-    assert float(marker_luminance[marker_core].mean()) <= 45.0, (
-        "INPUT positioning mark is too light"
+    marker_mean_luminance = float(marker_luminance[marker_core].mean())
+    assert 70.0 <= marker_mean_luminance <= 85.0, (
+        "INPUT positioning mark must read as a deep-brass engraving"
     )
     detail_luminance = (
         detail_4x[:, :, :3].astype(np.float32)
         @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
     )
-    assert float(np.percentile(detail_luminance[marker], 99)) <= 40.0, (
+    assert float(np.percentile(detail_luminance[marker], 99)) <= 85.0, (
         "INPUT positioning mark carries a bright moving fringe"
     )
     marker_base = np.asarray(marker_base_image)
@@ -252,9 +256,9 @@ def main() -> None:
     )
 
     moving_nonmarker = moving & ~marker
-    assert int(np.count_nonzero(moving_nonmarker)) <= int(
-        np.count_nonzero(marker) * 0.6
-    ), "moving microtexture is too dense relative to the positioning mark"
+    assert int(np.count_nonzero(moving_nonmarker)) <= 600, (
+        "moving microtexture is too dense"
+    )
     global_x, global_y = build.global_coordinates(
         build.INPUT_COMPONENT_CROP,
         build.MASTER_SCALE,

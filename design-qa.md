@@ -383,3 +383,22 @@ Comparison setup:
 - P2: none.
 
 final result: passed
+
+## Pass 23 — subtle INPUT locator engraving
+
+Comparison setup:
+
+- User-reported defect: the rotating locator read as an isolated black dot when it reached the lower-right face quadrant.
+- Browser-rendered 0°, 90°, 180°, and 270° DPR 2 phases: `design/qa-v13-input-marker-four-phases.png`.
+- Browser viewports and states: 1280×720 at DPR 2 for the four fixed phases, plus 390×844 at DPR 2 for touch-expanded mobile verification.
+
+- The locator is now a 25° circular engraving at a 20.5 logical-pixel radius with a 1.25 logical-pixel stroke. Its deep-brass `(96,70,36)` color follows the wheel material and retains a restrained rotational cue.
+- The 4× opaque locator core decreased from 1,026 pixels to 72 pixels. Total moving coverage decreased from 4.55% to 2.15%, while the approved microtexture, face mask, shaft, hub, rim, silhouette, and photographic lighting ownership remain unchanged.
+- All four browser phases keep the same INPUT bounding box with 0px geometry delta. The locator reads as a short engraved arc in every quadrant and stays integrated with the face at normal page scale.
+- All seven v5 browser image URLs use `?v=20260722-1`. Desktop and mobile browser contexts produced no warnings, errors, page errors, or failed requests.
+- The asset checker reports a zero-error neutral 4× composite, 0.974 visible-pixel MAE at 3×, 236,008 bytes of runtime assets, and 4,821,264 bytes of decoded RGBA memory.
+- P0: none.
+- P1: none.
+- P2: none.
+
+final result: passed

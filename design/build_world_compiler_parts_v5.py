@@ -23,7 +23,7 @@ INPUT_AXIS = (201, 263)
 INPUT_COMPONENT_CROP = (168, 204, 283, 316)
 INPUT_FACE_CROP = (168, 204, 252, 316)
 INPUT_MARKER_SEARCH = (203, 238, 219, 252)
-INPUT_MARKER_RGB = (32, 24, 14)
+INPUT_MARKER_RGB = (96, 70, 36)
 
 
 @dataclass(frozen=True)
@@ -240,24 +240,22 @@ def approved_input_component() -> tuple[
 
     marker_mask = Image.new("L", component.size, 0)
     marker_draw = ImageDraw.Draw(marker_mask)
-    marker_points_logical = [
-        (205.0, 240.2),
-        (211.8, 240.8),
-        (215.0, 243.1),
-        (214.2, 248.5),
-        (207.0, 249.8),
-        (204.4, 247.0),
-    ]
-    marker_points = [
-        (
-            (point_x - INPUT_COMPONENT_CROP[0]) * MASTER_SCALE,
-            (point_y - INPUT_COMPONENT_CROP[1]) * MASTER_SCALE,
-        )
-        for point_x, point_y in marker_points_logical
-    ]
-    marker_draw.polygon(marker_points, fill=255)
+    marker_radius = 20.5
+    marker_bounds = (
+        (INPUT_AXIS[0] - marker_radius - INPUT_COMPONENT_CROP[0]) * MASTER_SCALE,
+        (INPUT_AXIS[1] - marker_radius - INPUT_COMPONENT_CROP[1]) * MASTER_SCALE,
+        (INPUT_AXIS[0] + marker_radius - INPUT_COMPONENT_CROP[0]) * MASTER_SCALE,
+        (INPUT_AXIS[1] + marker_radius - INPUT_COMPONENT_CROP[1]) * MASTER_SCALE,
+    )
+    marker_draw.arc(
+        marker_bounds,
+        start=285,
+        end=310,
+        fill=255,
+        width=round(1.25 * MASTER_SCALE),
+    )
     marker_alpha = np.asarray(
-        marker_mask.filter(ImageFilter.GaussianBlur(radius=0.65)),
+        marker_mask.filter(ImageFilter.GaussianBlur(radius=0.55)),
         dtype=np.uint8,
     ).copy()
     marker_alpha[marker_alpha < MIN_ALPHA] = 0

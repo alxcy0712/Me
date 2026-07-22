@@ -3,10 +3,11 @@ import { useLayoutEffect, useRef, useState } from "react";
 
 const PART_ROOT_V4 = "/world-compiler/parts-v4";
 const PART_ROOT_V5 = "/world-compiler/parts-v5";
-const ASSET_VERSION = "20260718-12";
-const partAsset = (root, name) => `${root}/${name}?v=${ASSET_VERSION}`;
-const partAssetV4 = (name) => partAsset(PART_ROOT_V4, name);
-const partAssetV5 = (name) => partAsset(PART_ROOT_V5, name);
+const ASSET_VERSION_V4 = "20260718-12";
+const ASSET_VERSION_V5 = "20260722-1";
+const partAsset = (root, name, version) => `${root}/${name}?v=${version}`;
+const partAssetV4 = (name) => partAsset(PART_ROOT_V4, name, ASSET_VERSION_V4);
+const partAssetV5 = (name) => partAsset(PART_ROOT_V5, name, ASSET_VERSION_V5);
 const LAYERS = {
   backplateLeft: partAssetV4("backplate-left.webp"),
   backplateRight: partAssetV4("backplate-right.webp"),
