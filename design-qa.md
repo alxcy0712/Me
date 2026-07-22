@@ -354,3 +354,32 @@ Comparison setup:
 - P2: none.
 
 final result: passed
+
+## Pass 22 — high-fidelity shaft rotation
+
+Comparison setup:
+
+- Selected visual direction: `design/world-compiler-expanded.png`.
+- Phase 0 / Phase 1 comparison: `design/qa-v12-input-before-after.png`.
+- Measured shaft axis and A/B registration: `design/qa-v12-input-axis-overlay.png`.
+- Browser-rendered 0°, 90°, 180°, and 270° phases: `design/qa-v12-input-four-phases.png`.
+- One-second browser motion evidence: `design/qa-v12-motion-contact-sheet.png`.
+- Browser viewports and states: 1280×720 at DPR 2 for compact, expanded, reassembled, quick reversal, offscreen, page-hidden, and reduced-motion checks; 390×844 at DPR 2 for touch expansion, motion, scrolling, and overflow checks.
+
+- INPUT now uses four explicit physical layers. `input-static-back` owns the brass body and photographed lighting; `input-face-detail` owns the dark locator and sparse surface marks; `input-static-front` owns the shaft, hub, rim, silhouette, and foreground highlights; `input-face-mask` constrains every moving pixel to the approved face aperture.
+- The browser hierarchy is `scaleX(0.58) → rotateZ(θ) → scaleX(1 / 0.58)` with one shared transform origin. WAAPI writes only the middle layer, runs a linear 0°→360° cycle over 14 seconds, and retains the existing smoother-step speed envelope and lifecycle gates.
+- The source axis remains `(201,263)` in the 936×660 machine canvas and `(33,59)` in the 84×112 moving crop. The browser measured the expanded DPR 2 axis at `(646.41,384.64)` CSS pixels. All four phase samples reported 0px INPUT component bbox drift and 0px shaft bbox drift; the fixed-layer transforms stayed `none`, so shaft angle change and hub drift are also 0.
+- The four-phase sheet shows the dark locator completing the intended projected path while the photographed rim, outer contour, shaft, hub, frame, guide, and lighting remain registered. The A/B overlay confines red/cyan change to the approved face detail. The one-second 185×340 comparison changes 0.33% of the broad crop with a 0.206/255 mean grayscale delta, and the locator displacement remains visible at normal page scale.
+- Seven 4× 8-bit RGBA PNG mothers deterministically export seven tight 3× VP8L lossless WebP assets through premultiplied-alpha Lanczos resampling and solid-pixel sharpening. The minimum transparent safety edge is 19px at 4× and 14px at 3×. Fully transparent RGB is zero, moving/fixed intersection is zero, moving coverage is 4.55%, and the neutral 4× composite has zero maximum error.
+- Browser decode dimensions match every crop: static back/front 345×336, moving detail/mask 252×336, frame 528×1179, guide 129×480, and shaft 1140×105. The seven runtime files total 236,180 bytes and decode to 4,821,264 bytes.
+- P2 resolved: the implementation document's locked 3× runtime and its separate 2 source-pixels-per-device-pixel sentence are arithmetically incompatible at a 1180px scene. This pass uses the explicitly locked 3× runtime as the governing requirement. The measured 1280px layout provides 1.7408 source pixels per device pixel; the theoretical 1180px maximum provides 1.1898. DPR 2 browser close-ups show one clean edge with no doubled outline, paper rectangle, low-alpha haze, or flashing alias.
+- Ten target reversals at 90ms intervals produced 0px synchronous transform discontinuity. INPUT animation time advanced continuously from 1199.23ms to 1669.09ms without a phase reset. Reassembly then held an identical transform and animation time for 400ms with `data-mechanisms-active=false` and `will-change: auto`.
+- Offscreen playback held an identical transform and time for 450ms. Headless Chromium kept background tabs visible, so the page-hidden branch was exercised through the same browser document's `visibilitychange` event with `visibilityState="hidden"`; playback then held an identical transform and time for 450ms with `data-mechanisms-active=false`.
+- The 390×844 touch-expanded layout reports a 390px document and client width, reaches scrollY 2120, and continues INPUT motion. The reduced-motion context jumps to the selected expanded endpoint and keeps the INPUT transform and time identical for one second.
+- All 24 machine images decoded at natural dimensions. Desktop, mobile, and reduced-motion contexts produced no browser warnings, errors, failed requests, or HTTP error responses. The compact enclosure, expanded composition, reassembled enclosure, editorial typography, spacing, color, and all non-INPUT mechanisms remain visually unchanged.
+- `design/build_world_compiler_parts_v5.py` rebuilt byte-identical outputs, `design/check_world_compiler_parts_v5.py` passed, all three v12 Python scripts compiled, `npm run build` passed, and `git diff --check` passed. The requestAnimationFrame ownership count matches the `24a5a84` baseline.
+- P0: none.
+- P1: none.
+- P2: none.
+
+final result: passed

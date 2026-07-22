@@ -1,31 +1,37 @@
 import { MouseSimple } from "@phosphor-icons/react";
 import { useLayoutEffect, useRef, useState } from "react";
 
-const PART_ROOT = "/world-compiler/parts-v4";
-const partAsset = (name) => `${PART_ROOT}/${name}?v=20260718-11`;
+const PART_ROOT_V4 = "/world-compiler/parts-v4";
+const PART_ROOT_V5 = "/world-compiler/parts-v5";
+const ASSET_VERSION = "20260718-12";
+const partAsset = (root, name) => `${root}/${name}?v=${ASSET_VERSION}`;
+const partAssetV4 = (name) => partAsset(PART_ROOT_V4, name);
+const partAssetV5 = (name) => partAsset(PART_ROOT_V5, name);
 const LAYERS = {
-  backplateLeft: partAsset("backplate-left.webp"),
-  backplateRight: partAsset("backplate-right.webp"),
-  casingLeft: partAsset("casing-left.webp"),
-  casingRight: partAsset("casing-right.webp"),
-  inputFrame: partAsset("input-frame.webp"),
-  inputGuide: partAsset("input-guide.webp"),
-  inputFront: partAsset("input-core-front.webp"),
-  inputRotor: partAsset("input-rotor-cycle.webp"),
-  outputCore: partAsset("output-core-front.webp"),
-  outputFrame: partAsset("output-frame.webp"),
-  outputRotor: partAsset("output-rotor-cycle.webp"),
-  rock: partAsset("rock.webp"),
-  rulesFront: partAsset("rules-core-front.webp"),
-  rulesFrame: partAsset("rules-frame.webp"),
-  rulesGearInner: partAsset("rules-gear-inner.webp"),
-  rulesGearInnerMask: partAsset("rules-gear-inner-mask.webp"),
-  rulesGearOuter: partAsset("rules-gear-outer.webp"),
-  rulesGearOuterMask: partAsset("rules-gear-outer-mask.webp"),
-  shaft: partAsset("shaft.webp"),
-  stateCore: partAsset("state-core-front.webp"),
-  stateFrame: partAsset("state-frame.webp"),
-  stateRotor: partAsset("state-rotor-cycle.webp"),
+  backplateLeft: partAssetV4("backplate-left.webp"),
+  backplateRight: partAssetV4("backplate-right.webp"),
+  casingLeft: partAssetV4("casing-left.webp"),
+  casingRight: partAssetV4("casing-right.webp"),
+  inputFaceDetail: partAssetV5("input-face-detail-3x.webp"),
+  inputFaceMask: partAssetV5("input-face-mask-3x.webp"),
+  inputFrame: partAssetV5("input-frame-3x.webp"),
+  inputGuide: partAssetV5("input-guide-3x.webp"),
+  inputStaticBack: partAssetV5("input-static-back-3x.webp"),
+  inputStaticFront: partAssetV5("input-static-front-3x.webp"),
+  outputCore: partAssetV4("output-core-front.webp"),
+  outputFrame: partAssetV4("output-frame.webp"),
+  outputRotor: partAssetV4("output-rotor-cycle.webp"),
+  rock: partAssetV4("rock.webp"),
+  rulesFront: partAssetV4("rules-core-front.webp"),
+  rulesFrame: partAssetV4("rules-frame.webp"),
+  rulesGearInner: partAssetV4("rules-gear-inner.webp"),
+  rulesGearInnerMask: partAssetV4("rules-gear-inner-mask.webp"),
+  rulesGearOuter: partAssetV4("rules-gear-outer.webp"),
+  rulesGearOuterMask: partAssetV4("rules-gear-outer-mask.webp"),
+  shaft: partAssetV5("shaft-3x.webp"),
+  stateCore: partAssetV4("state-core-front.webp"),
+  stateFrame: partAssetV4("state-frame.webp"),
+  stateRotor: partAssetV4("state-rotor-cycle.webp"),
 };
 
 const CANVAS_WIDTH = 936;
@@ -35,10 +41,24 @@ const SPRING_FREQUENCY = 7.5;
 const MECHANISM_SAMPLE_COUNT = 17;
 const SAMPLE_POINTS = [0, 0.04, 0.1, 0.18, 0.28, 0.4, 0.54, 0.68, 0.8, 0.9, 1];
 
+const INPUT_ROTOR = {
+  name: "input",
+  staticBack: LAYERS.inputStaticBack,
+  detail: LAYERS.inputFaceDetail,
+  staticFront: LAYERS.inputStaticFront,
+  mask: LAYERS.inputFaceMask,
+  crop: [168, 204, 115, 112],
+  detailSize: [84, 112],
+  axis: [33, 59],
+  aspect: 0.58,
+  duration: 14000,
+};
+
 const PARTS = [
   {
     name: "shaft",
     src: LAYERS.shaft,
+    crop: [134, 241, 380, 35],
     origin: [501, 258],
     z: 20,
     from: { x: -39, y: 63, scaleX: 0.401, scaleY: 0.455 },
@@ -56,8 +76,7 @@ const PARTS = [
   },
   {
     name: "input-rotor",
-    src: LAYERS.inputFront,
-    rotor: { name: "input", src: LAYERS.inputRotor },
+    rotor: INPUT_ROTOR,
     origin: [201, 263],
     z: 30,
     from: { x: 131, y: 60, scale: 0.68 },
@@ -67,6 +86,7 @@ const PARTS = [
   {
     name: "input-guide",
     src: LAYERS.inputGuide,
+    crop: [269, 176, 43, 160],
     origin: [301, 263],
     z: 31,
     from: { x: 64, y: 60, scale: 0.6 },
@@ -105,6 +125,7 @@ const PARTS = [
   {
     name: "input-frame",
     src: LAYERS.inputFrame,
+    crop: [155, 25, 176, 393],
     origin: [315, 263],
     z: 40,
     from: { x: 55, y: 60, scale: 0.72 },
@@ -143,9 +164,11 @@ const PARTS = [
 const MECHANISM_CYCLES = [
   {
     selector: '[data-mechanism="input"]',
-    amplitude: 10,
-    aspect: 0.58,
-    duration: 5800,
+    keyframes: [
+      { transform: "rotateZ(0deg)" },
+      { transform: "rotateZ(360deg)" },
+    ],
+    duration: INPUT_ROTOR.duration,
   },
   {
     selector: '[data-mechanism="rules-outer"]',
@@ -305,6 +328,27 @@ function partStyle(part) {
   };
 }
 
+function cropStyle([left, top, width, height]) {
+  return {
+    left: `${(left / CANVAS_WIDTH) * 100}%`,
+    top: `${(top / CANVAS_HEIGHT) * 100}%`,
+    width: `${(width / CANVAS_WIDTH) * 100}%`,
+    height: `${(height / CANVAS_HEIGHT) * 100}%`,
+  };
+}
+
+function inputRotorStyle(rotor) {
+  return {
+    ...cropStyle(rotor.crop),
+    "--detail-width": `${(rotor.detailSize[0] / rotor.crop[2]) * 100}%`,
+    "--axis-x": `${(rotor.axis[0] / rotor.detailSize[0]) * 100}%`,
+    "--axis-y": `${(rotor.axis[1] / rotor.detailSize[1]) * 100}%`,
+    "--projection-x": rotor.aspect,
+    "--projection-x-inverse": 1 / rotor.aspect,
+    "--input-face-mask": `url("${rotor.mask}")`,
+  };
+}
+
 export default function WorldCompiler({ hint, expandedHint }) {
   const sceneRef = useRef(null);
   const animationsRef = useRef([]);
@@ -460,15 +504,18 @@ export default function WorldCompiler({ hint, expandedHint }) {
     });
 
     mechanismAnimationsRef.current = MECHANISM_CYCLES.flatMap(
-      ({ selector, amplitude, aspect, duration }) => {
+      ({ selector, amplitude, aspect, duration, keyframes }) => {
         const element = scene.querySelector(selector);
         if (!element) return [];
 
-        const animation = element.animate(rotorFrames(amplitude, aspect), {
-          duration,
-          easing: "linear",
-          iterations: Infinity,
-        });
+        const animation = element.animate(
+          keyframes ?? rotorFrames(amplitude, aspect),
+          {
+            duration,
+            easing: "linear",
+            iterations: Infinity,
+          },
+        );
         animation.pause();
         animation.currentTime = 0;
         return animation;
@@ -650,6 +697,30 @@ export default function WorldCompiler({ hint, expandedHint }) {
                       draggable="false"
                     />
                   </>
+                ) : part.rotor?.staticBack ? (
+                  <span
+                    className="machine-input-component"
+                    style={inputRotorStyle(part.rotor)}
+                  >
+                    <span className="machine-input-static machine-input-static-back">
+                      <img src={part.rotor.staticBack} alt="" draggable="false" />
+                    </span>
+                    <span className="machine-rotor-window machine-rotor-window-input">
+                      <span className="machine-rotor-projector">
+                        <span
+                          className="machine-rotor-spin"
+                          data-mechanism={part.rotor.name}
+                        >
+                          <span className="machine-rotor-unprojector">
+                            <img src={part.rotor.detail} alt="" draggable="false" />
+                          </span>
+                        </span>
+                      </span>
+                    </span>
+                    <span className="machine-input-static machine-input-static-front">
+                      <img src={part.rotor.staticFront} alt="" draggable="false" />
+                    </span>
+                  </span>
                 ) : part.rotor ? (
                   <>
                     <span
@@ -669,6 +740,10 @@ export default function WorldCompiler({ hint, expandedHint }) {
                       draggable="false"
                     />
                   </>
+                ) : part.crop ? (
+                  <span className="machine-part-asset" style={cropStyle(part.crop)}>
+                    <img src={part.src} alt="" draggable="false" />
+                  </span>
                 ) : (
                   <img src={part.src} alt="" draggable="false" />
                 )}
@@ -677,6 +752,12 @@ export default function WorldCompiler({ hint, expandedHint }) {
           ))}
         </span>
 
+        <img
+          className="machine-asset-probe"
+          src={INPUT_ROTOR.mask}
+          alt=""
+          draggable="false"
+        />
         <img
           className="machine-asset-probe"
           src={LAYERS.rulesGearOuterMask}

@@ -280,6 +280,16 @@ a:focus-visible {
   height: 100%;
 }
 
+.machine-input-component,
+.machine-input-static,
+.machine-part-asset,
+.machine-rotor-projector,
+.machine-rotor-spin,
+.machine-rotor-unprojector {
+  position: absolute;
+  display: block;
+}
+
 .machine-gear-window,
 .machine-rotor-window {
   overflow: hidden;
@@ -300,8 +310,8 @@ a:focus-visible {
   left: 43.1624%;
   width: 9.8291%;
   height: 25.7576%;
-  -webkit-mask-image: url("/world-compiler/parts-v4/rules-gear-outer-mask.webp?v=20260718-11");
-  mask-image: url("/world-compiler/parts-v4/rules-gear-outer-mask.webp?v=20260718-11");
+  -webkit-mask-image: url("/world-compiler/parts-v4/rules-gear-outer-mask.webp?v=20260718-12");
+  mask-image: url("/world-compiler/parts-v4/rules-gear-outer-mask.webp?v=20260718-12");
 }
 
 .machine-gear-window-inner {
@@ -309,15 +319,23 @@ a:focus-visible {
   left: 37.8205%;
   width: 8.9744%;
   height: 21.8182%;
-  -webkit-mask-image: url("/world-compiler/parts-v4/rules-gear-inner-mask.webp?v=20260718-11");
-  mask-image: url("/world-compiler/parts-v4/rules-gear-inner-mask.webp?v=20260718-11");
+  -webkit-mask-image: url("/world-compiler/parts-v4/rules-gear-inner-mask.webp?v=20260718-12");
+  mask-image: url("/world-compiler/parts-v4/rules-gear-inner-mask.webp?v=20260718-12");
 }
 
 .machine-rotor-window-input {
-  top: 30.9091%;
-  left: 17.9487%;
-  width: 8.9744%;
-  height: 16.9697%;
+  z-index: 2;
+  inset: 0 auto 0 0;
+  width: var(--detail-width);
+  height: 100%;
+  -webkit-mask-image: var(--input-face-mask);
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-image: var(--input-face-mask);
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: 100% 100%;
 }
 
 .machine-rotor-window-state {
@@ -348,10 +366,6 @@ a:focus-visible {
   transform-origin: 50% 50%;
 }
 
-.machine-rotor-window-input .machine-cycle-rotor {
-  transform-origin: 39.2857% 52.6786%;
-}
-
 .machine-rotor-window-state .machine-cycle-rotor {
   transform-origin: 43.038% 50%;
 }
@@ -360,7 +374,43 @@ a:focus-visible {
   transform-origin: 50.2222% 50%;
 }
 
-.machine-scene[data-mechanisms-active="true"] .machine-cycle-rotor {
+.machine-input-static,
+.machine-rotor-projector,
+.machine-rotor-spin,
+.machine-rotor-unprojector {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.machine-input-static-back {
+  z-index: 1;
+}
+
+.machine-input-static-front {
+  z-index: 3;
+}
+
+.machine-rotor-projector,
+.machine-rotor-spin,
+.machine-rotor-unprojector {
+  transform-origin: var(--axis-x) var(--axis-y);
+}
+
+.machine-rotor-projector {
+  transform: scaleX(var(--projection-x));
+}
+
+.machine-rotor-spin {
+  backface-visibility: hidden;
+}
+
+.machine-rotor-unprojector {
+  transform: scaleX(var(--projection-x-inverse));
+}
+
+.machine-scene[data-mechanisms-active="true"] .machine-cycle-rotor,
+.machine-scene[data-mechanisms-active="true"] .machine-rotor-spin {
   will-change: transform;
 }
 
