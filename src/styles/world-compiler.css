@@ -1,0 +1,113 @@
+.machine-column {
+  position: relative;
+  z-index: 3;
+  min-width: 0;
+  height: 650px;
+  align-self: stretch;
+}
+
+.machine-interaction {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.machine-interaction:disabled {
+  cursor: wait;
+}
+
+.machine-interaction:focus {
+  outline: none;
+}
+
+.machine-interaction:focus-visible {
+  outline: none;
+}
+
+.machine-interaction:focus-visible .machine-hint {
+  color: var(--ink);
+  outline: 1px solid color-mix(in srgb, var(--brass) 72%, transparent);
+  outline-offset: 0.38rem;
+}
+
+.machine-viewport,
+.machine-plane,
+.armillary-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.machine-viewport {
+  perspective: 1100px;
+  perspective-origin: 50% 48%;
+}
+
+.machine-plane {
+  opacity: 0;
+  transform: rotateX(0deg) rotateY(0deg);
+  transform-origin: 50% 50%;
+  transform-style: preserve-3d;
+  transition: opacity 180ms ease-out;
+  will-change: transform;
+}
+
+.machine-interaction[data-ready="true"] .machine-plane {
+  opacity: 1;
+}
+
+.armillary-canvas {
+  pointer-events: none;
+  outline: none;
+}
+
+.machine-hint {
+  position: absolute;
+  z-index: 2;
+  right: 1.55rem;
+  bottom: 1.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  transition: color 220ms ease;
+}
+
+.machine-interaction[data-expanded="true"] .machine-hint {
+  color: var(--ink);
+}
+
+.machine-load-state {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.12em;
+}
+
+.machine-fallback {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+}
