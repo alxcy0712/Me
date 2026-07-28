@@ -402,3 +402,28 @@ Comparison setup:
 - P2: none.
 
 final result: passed
+
+## Pass 24 — physically-layered gear and drum assets (v6 pipeline)
+
+Comparison setup:
+
+- Asset pipeline: `design/build_world_compiler_parts_v6.py` (replaces the v5 ring-from-full-frame approach with angular-field-separated layers).
+- RULES gears (outer/inner): three layers each — rotating ring (teeth, rim, spokes), static (hub, axle corridor, 3D thickness), shading overlay (pure angular-field screen-space light).
+- STATE drum: three layers — rotating ring (graduations, engraved ticks), static (barrel sliver), shading (solved per-pixel correction, heavily blurred to prevent ghosting).
+- Runtime sprites: 3× lossless WebP via `cwebp -exact -lossless` with premultiplied-alpha Lanczos from 4× masters. Transparent RGB zeroed (`< 0.5` threshold). Mask exports use PIL lossless WebP.
+
+- All 14 exported layers exist at expected 3× natural sizes.
+- Transparent-pixel RGB is zeroed on every layer (0 dirty px across all layers).
+- RULES neutral composite MAE: outer 13.51, inner 12.15 (limit 15.0). Differences confined to antialiased mask edges.
+- STATE neutral composite MAE: 9.79 (limit 14.0). Engraving/highlight overlay adds slight procedural-vs-photographic variance.
+- Hub-zone alpha: 3.0% outer, 3.2% inner — sub-pixel feather transition (0.005 rho at 4× master, ~0.6px at 3× runtime) for aliasing-free rotation.
+- Axle corridor clearance: 3.3% outer, 2.8% inner — corridor mask aligned with build script geometry.
+- STATE ring coverage 42.21%, engraved dark pixels 9,752 (limit 400).
+- Angular lighting field: outer gain dev=0.697, inner gain dev=0.653, state gain dev=0.178.
+- Browser QA: phases (RULES ω₂=−1.5ω₁, INPUT≡STATE, console clean), sphere (quaternion norm, 360° return, backing 2.0×), lifecycle 9/9 (FPS 16.5, reversal continuous, offscreen/hidden pause, no leak, reduced-motion), viewports (desktop DPR1/2, mobile, no overflow, console clean).
+- `python3 design/build_world_compiler_parts_v6.py` and `python3 design/check_world_compiler_parts_v6.py` both pass.
+- P0: none.
+- P1: none.
+- P2: none.
+
+final result: passed
