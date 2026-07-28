@@ -6,7 +6,7 @@ import {
   GithubLogo,
 } from "@phosphor-icons/react";
 
-const WorldCompiler = lazy(() => import("./WorldCompiler.jsx?v=14"));
+const WorldCompiler = lazy(() => import("./WorldCompiler.jsx?v=20260728-26"));
 
 const content = {
   zh: {

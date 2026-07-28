@@ -229,7 +229,7 @@ a:focus-visible {
   border: 0;
   background: var(--paper);
   color: var(--ink);
-  cursor: crosshair;
+  cursor: pointer;
 }
 
 .machine-scene {
@@ -266,160 +266,20 @@ a:focus-visible {
   pointer-events: none;
 }
 
-.machine-part-front {
-  z-index: 1;
+.machine-part-asset {
+  position: absolute;
+  display: block;
 }
 
-.machine-gear-window,
-.machine-rotor-window,
-.machine-cycle-rotor,
-.machine-cycle-rotor > img {
+.machine-stage-3d {
   position: absolute;
+  inset: 0;
+  z-index: 30;
   display: block;
   width: 100%;
   height: 100%;
-}
-
-.machine-input-component,
-.machine-input-static,
-.machine-part-asset,
-.machine-rotor-projector,
-.machine-rotor-spin,
-.machine-rotor-unprojector {
-  position: absolute;
-  display: block;
-}
-
-.machine-gear-window,
-.machine-rotor-window {
-  overflow: hidden;
   pointer-events: none;
-}
-
-.machine-gear-window {
-  -webkit-mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: 100% 100%;
-  mask-position: center;
-  mask-repeat: no-repeat;
-  mask-size: 100% 100%;
-}
-
-.machine-gear-window-outer {
-  top: 26.3636%;
-  left: 43.1624%;
-  width: 9.8291%;
-  height: 25.7576%;
-  -webkit-mask-image: url("/world-compiler/parts-v4/rules-gear-outer-mask.webp?v=20260718-12");
-  mask-image: url("/world-compiler/parts-v4/rules-gear-outer-mask.webp?v=20260718-12");
-}
-
-.machine-gear-window-inner {
-  top: 28.3333%;
-  left: 37.8205%;
-  width: 8.9744%;
-  height: 21.8182%;
-  -webkit-mask-image: url("/world-compiler/parts-v4/rules-gear-inner-mask.webp?v=20260718-12");
-  mask-image: url("/world-compiler/parts-v4/rules-gear-inner-mask.webp?v=20260718-12");
-}
-
-.machine-rotor-window-input {
-  z-index: 2;
-  inset: 0 auto 0 0;
-  width: var(--detail-width);
-  height: 100%;
-  -webkit-mask-image: var(--input-face-mask);
-  -webkit-mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-size: 100% 100%;
-  mask-image: var(--input-face-mask);
-  mask-position: center;
-  mask-repeat: no-repeat;
-  mask-size: 100% 100%;
-}
-
-.machine-rotor-window-state {
-  top: 28.7879%;
-  left: 52.8846%;
-  width: 8.4402%;
-  height: 20.6061%;
-}
-
-.machine-rotor-window-output {
-  top: 21.0606%;
-  left: 72.2222%;
-  width: 24.0385%;
-  height: 36.3636%;
-}
-
-.machine-cycle-rotor {
-  inset: 0;
-  backface-visibility: hidden;
-  transform: translateZ(0);
-}
-
-.machine-gear-window-outer .machine-cycle-rotor {
-  transform-origin: 47.8261% 50%;
-}
-
-.machine-gear-window-inner .machine-cycle-rotor {
-  transform-origin: 50% 50%;
-}
-
-.machine-rotor-window-state .machine-cycle-rotor {
-  transform-origin: 43.038% 50%;
-}
-
-.machine-rotor-window-output .machine-cycle-rotor {
-  transform-origin: 50.2222% 50%;
-}
-
-.machine-input-static,
-.machine-rotor-projector,
-.machine-rotor-spin,
-.machine-rotor-unprojector {
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.machine-input-static-back {
-  z-index: 1;
-}
-
-.machine-input-static-front {
-  z-index: 3;
-}
-
-.machine-rotor-projector,
-.machine-rotor-spin,
-.machine-rotor-unprojector {
-  transform-origin: var(--axis-x) var(--axis-y);
-}
-
-.machine-rotor-projector {
-  transform: scaleX(var(--projection-x));
-}
-
-.machine-rotor-spin {
-  backface-visibility: hidden;
-}
-
-.machine-rotor-unprojector {
-  transform: scaleX(var(--projection-x-inverse));
-}
-
-.machine-scene[data-mechanisms-active="true"] .machine-cycle-rotor,
-.machine-scene[data-mechanisms-active="true"] .machine-rotor-spin {
-  will-change: transform;
-}
-
-.machine-cycle-rotor > img {
-  inset: 0;
-}
-
-.machine-asset-probe {
-  display: none;
+  outline: none;
 }
 
 .machine-internals {
