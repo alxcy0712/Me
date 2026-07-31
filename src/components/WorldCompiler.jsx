@@ -4,8 +4,8 @@ import ArmillaryStage from "./ArmillaryStage.jsx";
 
 const OPEN_FREQUENCY = 7.8;
 const TILT_FREQUENCY = 10.5;
-const MAX_TILT_X = 3.2;
-const MAX_TILT_Y = 4;
+const MAX_TILT_X = 4;
+const MAX_TILT_Y = 5;
 
 function advanceSpring(value, velocity, target, elapsed, frequency) {
   const displacement = value - target;
