@@ -18,3 +18,10 @@ design/prototype-expanded.png
 design/prototype-mobile.png
 design/qa-comparison-collapsed.png
 design/qa-comparison-expanded.png
+
+# Local resume (contains personal information)
+/resume-html/
+
+# Local design references and visual QA artifacts
+/design/
+/design-qa.md
