@@ -5,7 +5,7 @@
 }
 
 .site-header {
-  min-height: 78px;
+  min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -59,7 +59,7 @@
 }
 
 .hero {
-  min-height: 690px;
+  min-height: 714px;
   display: grid;
   grid-template-columns: minmax(390px, 0.77fr) minmax(660px, 1.23fr);
   align-items: center;
@@ -68,7 +68,7 @@
 
 .hero-copy {
   position: relative;
-  z-index: 2;
+  z-index: 4;
   overflow: hidden;
   padding: 5.1rem 0 4.2rem clamp(0.25rem, 2vw, 2.5rem);
 }

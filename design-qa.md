@@ -1,63 +1,55 @@
-# World Compiler design QA — Causal Armillary
+# World Compiler — Retracted Shaft and Warm-Metal QA
 
-## Comparison target
+## Source of truth
 
-- Default source: `design/world-compiler-causal-armillary-closed.png` (1536 × 1024).
-- Expanded source: `design/world-compiler-causal-armillary-expanded.png` (1536 × 1024).
-- Editorial source: `design/world-compiler-expanded.png` (1536 × 1024).
-- Browser default: `design/qa-causal-armillary-closed.png` (1536 × 1024).
-- Browser expanded: `design/qa-causal-armillary-expanded.png` (1536 × 1024).
-- Mobile browser: `design/qa-causal-armillary-mobile.png` (390 × 844).
-- Combined reviews: `design/qa-causal-armillary-closed-comparison.jpg` and `design/qa-causal-armillary-expanded-comparison.jpg`.
-- Local preview: `http://localhost:4173/`.
+- Closed structure: `design/world-compiler-causal-armillary-closed.png` (1536 × 1024).
+- Selected color and material target: `/var/folders/mt/zkwbsh496490b9dxy6lhqd880000gn/T/codex-clipboard-72bf0504-d39b-4cc6-bae0-4e2eab5032a1.png` (1536 × 1024).
+- Implementation: `src/components/ArmillaryStage.jsx` in one parametric Three.js scene.
 
-## Combined comparison review
+## Evidence
 
-The source and browser captures were placed side by side at identical 1536 × 1024 viewports and inspected together.
+- Baseline closed capture: `design/qa-closed-color-before.png`.
+- Final closed capture: `design/qa-closed-color-final.png`.
+- Final expanded capture: `design/qa-expanded-color-final.png`.
+- Closed full comparison: `design/qa-closed-color-final-comparison.jpg`.
+- Closed focused comparison: `design/qa-closed-color-final-focused.jpg`.
+- Expanded full comparison: `design/qa-expanded-color-final-comparison.jpg`.
+- Expanded focused comparison: `design/qa-expanded-color-final-focused.jpg`.
+- Mobile smoke test: `design/qa-closed-color-mobile.png`.
 
-- The warm ivory editorial frame, headline scale, copy rhythm, action hierarchy, hero/index boundary, and right-column instrument scale match the selected direction.
-- The default state reads as one compact circular instrument with silver and perforated brass shell halves, central stone, restrained contact shadow, and a clean silhouette.
-- The expanded state keeps every visible part in one continuous 3D scene. Both shell halves travel outward while AXIOM, MODEL, SYSTEM, and WORLD become spatially distinct around the shared shaft.
-- WORLD now uses broad top and bottom engraved segments with paired metal rails across its open sides, which restores the lighter armillary silhouette of the selected source.
-- All four English names are shallow geometric metal/enamel inlays embedded flush with their ring faces. They inherit ring depth, rotation, lighting, and occlusion instead of facing the camera independently.
-- Brushed bump detail, beveled band faces, dual edge rails, recessed rivets, outer clamps, dark perforation cavities, shell grooves, shaft collars, and a layered central bearing raise the real-time material reading at normal page size.
+## Normalization
 
-## Findings
+| State | Source pixels | Implementation pixels | CSS viewport | Density |
+| --- | ---: | ---: | ---: | ---: |
+| Closed desktop | 1536 × 1024 | 1536 × 1024 | 1536 × 1024 | screenshot 1×; WebGL 2× |
+| Expanded desktop | 1536 × 1024 | 1536 × 1024 | 1536 × 1024 | screenshot 1×; WebGL 2× |
+| Closed mobile | n/a | 390 × 844 | 390 × 844 | screenshot 1× |
 
-- No actionable P0, P1, or P2 findings remain.
-- [P3] The generated source retains finer stochastic wear and irregular hand-machined surface variation than the real-time parametric model.
-  - The live implementation now carries the same broad material hierarchy and mechanical anatomy through real geometry, surface maps, fixed world lighting, and depth-tested occlusion.
-  - The remaining difference is visible mainly in the focused 2× comparison crop rather than the normal page composition.
-- [P3] The in-app browser coordinate mover does not expose a persistent CSS `:hover` state.
-  - The expanded visual endpoint was verified through the component's equivalent keyboard/focus path.
-  - The production pointer path uses native `mouseenter`, `mousemove`, and `mouseleave` handlers that call the same spring target and tilt controller.
+## Findings and iteration history
 
-## Interaction verification
+- [P1 resolved] Closed equatorial shaft extended through both shell edges and read as an external bar. The shaft assembly now scales to 28% length at the desktop closed endpoint and remains inside the center bearing. It returns continuously to full scale during expansion.
+- [P1 resolved] Baseline metal used cool white silver, saturated yellow-gold, and flat black. Broad faces now use warm champagne silver; latticework and hardware use quiet aged brass; mechanical recesses use brown-black graphite.
+- [P2 resolved] Ring faces lacked high-key studio reflections. A larger warm camera-side softbox, restrained exposure, brushed roughness variation, and warmer fixed lights now create broad highlights with dark side-wall separation.
+- [P2 resolved] The right shell read as a bright orange plate. Its backing is now darker aged bronze with brighter polished pore rims and preserved cavity depth.
+- [P2 resolved] Graphite rings appeared uniformly black. Directional roughness and bump variation now preserve readable surface texture in the dark material.
+- [P3 remaining] The procedural perforation web and center-bearing topology remain simpler than the photographic concept while preserving the selected palette, depth hierarchy, and reversible shared-scene constraint.
 
-- Default state is closed; pointer entry targets expansion and pointer leave targets reassembly.
-- Expansion and tilt use independent critically damped springs. A direction change keeps current progress and velocity, so reversal has no endpoint jump.
-- Pointer position maps to a restrained whole-plane `rotateX`/`rotateY` transform; leaving springs both axes back to neutral.
-- Keyboard focus activates the expanded state and blur reassembles it. Touch and pen toggle the same target on pointer release.
-- The bilingual hint, `aria-pressed`, loading state, focus indicator, and reduced-motion path are present.
-- Locale toggle changed the page language, title, and control label in browser verification.
-- The primary Explore Essays link navigated to `#essays` and aligned the target section with the viewport.
+## Required fidelity surfaces
 
-## Runtime and responsive verification
+- Fonts and typography: unchanged; the implementation retains the established bilingual editorial hierarchy and wrapping.
+- Spacing and layout rhythm: closed and expanded machine bounds remain inside the desktop interaction region; document width equals viewport width.
+- Colors and visual tokens: warm champagne silver, aged brass, graphite, cream highlights, and brown stone now match the selected reference direction.
+- Image quality and asset fidelity: all machine surfaces remain live PBR geometry with brushed roughness, bevels, recesses, fixed lighting, and soft contact shadow; no endpoint raster swap is used.
+- Copy and content: unchanged from the selected editorial layout.
 
-- One transparent Three.js canvas owns the shell halves, four ring assemblies, embedded labels, shared shaft, markers, bearing, stone, shadows, and lighting.
-- Repeated perforations and markers are instanced. The scene remains below the 60-draw-call target by construction.
-- The renderer caps DPR at 2 on desktop and 1.5 on mobile. It renders only while an expansion or tilt spring is active, then returns to a stopped state.
-- Rendering pauses offscreen and while the page is hidden. Reduced-motion keeps a stable compact instrument and neutral tilt.
-- Three.js and `RoomEnvironment` remain behind the lazy World Compiler boundary; the initial React bundle excludes the 3D runtime.
-- Desktop viewport: 1536 × 1024 with zero horizontal overflow.
-- Mobile viewport: 390 × 844 with `scrollWidth === innerWidth === 390`.
-- Fresh final browser session: default closed state ready, one main, one canvas, no console errors or warnings.
+## Regression and verification
+
+- Closed desktop: `data-expanded=false`, `data-ready=true`, no horizontal overflow.
+- Expanded desktop: `data-expanded=true`; interaction bounds x = 542–1490 px within the 1536 px viewport.
+- Closed mobile: 390 px viewport, 358 px canvas, no horizontal overflow.
+- Primary interaction: focus/hover expansion remains reversible and the shaft extends with the same motion progress.
 - Production build: passed with Vite 6.4.2.
-
-## Cleanup verification
-
-- The previous `src/WorldCompiler.jsx`, `src/MachineStage3D.jsx`, raster runtime layers, generated part slices, old QA scripts, old QA captures, and obsolete motion notes were removed.
-- Page content, application layout, World Compiler interaction, Three.js stage, and responsive styles now live in focused modules.
-- `git diff --check` passes.
+- `git diff --check`: passed.
+- Browser console: no warnings or errors in the final desktop pass.
 
 final result: passed

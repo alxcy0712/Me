@@ -1,15 +1,15 @@
 :root {
-  color: #171715;
-  background: #f3eee5;
+  color: #171614;
+  background: #efe8de;
   font-family: Inter, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
-  --paper: #f3eee5;
-  --ink: #171715;
-  --muted: #68645d;
+  --paper: #efe8de;
+  --ink: #171614;
+  --muted: #6b665f;
   --rule: rgba(23, 23, 21, 0.54);
   --soft-rule: rgba(23, 23, 21, 0.2);
-  --brass: #987239;
+  --brass: #9b7441;
 }
 
 * {
@@ -24,7 +24,23 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background: var(--paper);
+  background:
+    url("../assets/paper-grain.svg"),
+    radial-gradient(
+      circle at 72% 40%,
+      rgba(255, 255, 255, 0.58) 0,
+      rgba(255, 255, 255, 0.2) 28%,
+      transparent 58%
+    ),
+    radial-gradient(
+      circle at 14% 16%,
+      rgba(255, 255, 255, 0.28) 0,
+      transparent 34%
+    ),
+    linear-gradient(115deg, rgba(111, 80, 46, 0.025), transparent 44%),
+    var(--paper);
+  background-size: 256px 256px, auto, auto, auto, auto;
+  background-blend-mode: multiply, normal, normal, normal, normal;
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -4,8 +4,8 @@ import ArmillaryStage from "./ArmillaryStage.jsx";
 
 const OPEN_FREQUENCY = 7.8;
 const TILT_FREQUENCY = 10.5;
-const MAX_TILT_X = 4;
-const MAX_TILT_Y = 5.5;
+const MAX_TILT_X = 3.2;
+const MAX_TILT_Y = 4;
 
 function advanceSpring(value, velocity, target, elapsed, frequency) {
   const displacement = value - target;
@@ -23,7 +23,6 @@ function isSettled(value, velocity, target, epsilon = 0.001) {
 
 export default function WorldCompiler({ hint, expandedHint }) {
   const interactionRef = useRef(null);
-  const planeRef = useRef(null);
   const stageRef = useRef(null);
   const pointerBoundsRef = useRef(null);
   const hoveredRef = useRef(false);
@@ -47,13 +46,6 @@ export default function WorldCompiler({ hint, expandedHint }) {
   const [assetState, setAssetState] = useState("loading");
   const [expanded, setExpanded] = useState(false);
 
-  const renderPlane = () => {
-    const plane = planeRef.current;
-    if (!plane) return;
-    const motion = motionRef.current;
-    plane.style.transform = `rotateX(${motion.tiltX.toFixed(3)}deg) rotateY(${motion.tiltY.toFixed(3)}deg)`;
-  };
-
   const stopAtRest = () => {
     const motion = motionRef.current;
     motion.progress = motion.progressTarget;
@@ -64,8 +56,11 @@ export default function WorldCompiler({ hint, expandedHint }) {
     motion.tiltYVelocity = 0;
     motion.frame = 0;
     motion.lastTime = 0;
-    stageRef.current?.setProgress(motion.progress);
-    renderPlane();
+    stageRef.current?.setPose(
+      motion.progress,
+      motion.tiltX,
+      motion.tiltY,
+    );
   };
 
   const startMotion = () => {
@@ -121,8 +116,11 @@ export default function WorldCompiler({ hint, expandedHint }) {
       current.tiltY = tiltY.value;
       current.tiltYVelocity = tiltY.velocity;
 
-      stageRef.current?.setProgress(current.progress);
-      renderPlane();
+      stageRef.current?.setPose(
+        current.progress,
+        current.tiltX,
+        current.tiltY,
+      );
 
       const settled =
         isSettled(
@@ -221,14 +219,18 @@ export default function WorldCompiler({ hint, expandedHint }) {
       aria-busy={assetState === "loading"}
       data-expanded={expanded}
       data-ready={assetState === "ready"}
-      onMouseEnter={(event) => {
+      onPointerEnter={(event) => {
+        if (event.pointerType !== "mouse") return;
         hoveredRef.current = true;
         pointerBoundsRef.current = event.currentTarget.getBoundingClientRect();
         setOpen(true);
         updatePointerTilt(event);
       }}
-      onMouseMove={updatePointerTilt}
-      onMouseLeave={() => {
+      onPointerMove={(event) => {
+        if (event.pointerType === "mouse") updatePointerTilt(event);
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType !== "mouse") return;
         hoveredRef.current = false;
         pointerBoundsRef.current = null;
         setOpen(false);
@@ -259,12 +261,17 @@ export default function WorldCompiler({ hint, expandedHint }) {
       }}
     >
       <span className="machine-viewport" aria-hidden="true">
-        <span className="machine-plane" ref={planeRef}>
+        <span className="machine-plane">
           <ArmillaryStage
             ref={stageRef}
             onReady={() => {
               setAssetState("ready");
-              stageRef.current?.setProgress(motionRef.current.progress);
+              const motion = motionRef.current;
+              stageRef.current?.setPose(
+                motion.progress,
+                motion.tiltX,
+                motion.tiltY,
+              );
             }}
             onError={() => setAssetState("error")}
           />

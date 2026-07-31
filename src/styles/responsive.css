@@ -9,6 +9,7 @@
 
   .machine-column {
     height: 590px;
+    min-height: 0;
   }
 
   .topic-grid {
@@ -42,8 +43,13 @@
   }
 
   .machine-column {
-    height: 560px;
+    height: clamp(370px, 58vw, 560px);
     margin-top: -1rem;
+  }
+
+  .machine-interaction {
+    width: 100%;
+    margin-left: 0;
   }
 
   .thought-index {
@@ -112,6 +118,7 @@
   .machine-hint {
     right: 0.75rem;
     bottom: 0.75rem;
+    min-width: 0;
     font-size: 0.62rem;
   }
 
@@ -173,9 +180,5 @@
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
-  }
-
-  .machine-plane {
-    transform: none !important;
   }
 }
