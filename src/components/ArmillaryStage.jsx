@@ -1516,11 +1516,12 @@ const ArmillaryStage = forwardRef(function ArmillaryStage({ onError, onReady }, 
           const height = canvas.clientHeight;
           if (!width || !height) return;
 
-          runtime.isMobile = window.innerWidth <= 640;
-          const pixelRatioLimit = runtime.isMobile ? 1.5 : 2;
+          runtime.isMobile = window.innerWidth <= 950;
+          const lowDpr = window.innerWidth <= 640;
+          const pixelRatioLimit = lowDpr ? 1.5 : 2;
           const devicePixelRatio = window.devicePixelRatio || 1;
           renderer.setPixelRatio(
-            runtime.isMobile
+            lowDpr
               ? Math.min(devicePixelRatio, pixelRatioLimit)
               : Math.min(Math.max(devicePixelRatio, 1.5), pixelRatioLimit),
           );

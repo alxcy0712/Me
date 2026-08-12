@@ -27,6 +27,7 @@ export default function WorldCompiler({ hint, expandedHint }) {
   const pointerBoundsRef = useRef(null);
   const hoveredRef = useRef(false);
   const pointerTypeRef = useRef("");
+  const pointerStartRef = useRef(null);
   const motionRef = useRef({
     frame: 0,
     lastTime: 0,
@@ -237,15 +238,22 @@ export default function WorldCompiler({ hint, expandedHint }) {
       }}
       onPointerDown={(event) => {
         pointerTypeRef.current = event.pointerType;
+        pointerStartRef.current = { x: event.clientX, y: event.clientY };
       }}
       onPointerUp={(event) => {
-        if (event.pointerType === "touch" || event.pointerType === "pen") {
+        const start = pointerStartRef.current;
+        const isTap =
+          start &&
+          Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 10;
+        if ((event.pointerType === "touch" || event.pointerType === "pen") && isTap) {
           setOpen(motionRef.current.progressTarget === 0);
         }
         pointerTypeRef.current = "";
+        pointerStartRef.current = null;
       }}
       onPointerCancel={() => {
         pointerTypeRef.current = "";
+        pointerStartRef.current = null;
         setOpen(false);
       }}
       onClick={(event) => {
