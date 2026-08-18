@@ -21,7 +21,7 @@ function isSettled(value, velocity, target, epsilon = 0.001) {
   return Math.abs(target - value) < epsilon && Math.abs(velocity) < epsilon;
 }
 
-export default function WorldCompiler({ hint, expandedHint }) {
+export default function WorldCompiler({ hint, expandedHint, loadingLabel, errorLabel }) {
   const interactionRef = useRef(null);
   const stageRef = useRef(null);
   const pointerBoundsRef = useRef(null);
@@ -293,7 +293,7 @@ export default function WorldCompiler({ hint, expandedHint }) {
 
       {assetState !== "ready" ? (
         <span className="machine-load-state" aria-hidden="true">
-          {assetState === "error" ? "WORLD COMPILER / RENDER ERROR" : "WORLD COMPILER / LOADING"}
+          {assetState === "error" ? errorLabel : loadingLabel}
         </span>
       ) : null}
     </button>

@@ -10,17 +10,16 @@ import {
 import {
   ArrowRight,
   ArrowUpRight,
-  EnvelopeSimple,
   GithubLogo,
 } from "@phosphor-icons/react";
 import { content, plannedEssays, topics } from "./content.js";
 
 const WorldCompiler = lazy(() => import("./components/WorldCompiler.jsx"));
 
-const PAGE_IDS = ["top", "index", "essays", "about"];
+const PAGE_IDS = ["top", "index", "essays"];
 const PAGE_LABELS = {
-  zh: ["封面", "思考索引", "文章", "关于"],
-  en: ["Cover", "Index", "Essays", "About"],
+  zh: ["封面", "思考索引", "文章"],
+  en: ["Cover", "Index", "Essays"],
 };
 const PAGE_TRANSITION_MS = 760;
 const WHEEL_THRESHOLD = 48;
@@ -32,7 +31,7 @@ function getInitialPage() {
   return page >= 0 ? page : 0;
 }
 
-function Header({ activePage, copy, locale, onNavigate, onToggleLocale }) {
+function Header({ activePage, copy, onNavigate, onToggleLocale }) {
   const navigate = (event, pageId) => {
     event.preventDefault();
     onNavigate(pageId);
@@ -44,35 +43,33 @@ function Header({ activePage, copy, locale, onNavigate, onToggleLocale }) {
         className="brand"
         href="#top"
         aria-current={activePage === 0 ? "page" : undefined}
-        aria-label="返回首页"
+        aria-label={copy.brandLabel}
         onClick={(event) => navigate(event, "top")}
       >
-        EVERYTHING <span>/</span> 万物
+        {copy.brand}
       </a>
-      <nav className="site-nav" aria-label="主导航">
-        <a
-          href="#essays"
-          aria-current={activePage === 2 ? "page" : undefined}
-          onClick={(event) => navigate(event, "essays")}
-        >
-          {copy.nav.essays} / Essays
-        </a>
+      <nav className="site-nav" aria-label={copy.navLabel}>
         <a
           href="#index"
           aria-current={activePage === 1 ? "page" : undefined}
           onClick={(event) => navigate(event, "index")}
         >
-          {copy.nav.index} / Index
+          {copy.nav.index}
         </a>
         <a
-          href="#about"
-          aria-current={activePage === 3 ? "page" : undefined}
-          onClick={(event) => navigate(event, "about")}
+          href="#essays"
+          aria-current={activePage === 2 ? "page" : undefined}
+          onClick={(event) => navigate(event, "essays")}
         >
-          {copy.nav.about} / About
+          {copy.nav.essays}
         </a>
-        <button className="locale-toggle" type="button" onClick={onToggleLocale}>
-          {locale === "zh" ? "中 / EN" : "中文 / EN"}
+        <button
+          className="locale-toggle"
+          type="button"
+          aria-label={copy.localeToggleLabel}
+          onClick={onToggleLocale}
+        >
+          {copy.localeToggle}
         </button>
       </nav>
     </header>
@@ -93,7 +90,7 @@ function Hero({ copy, onNavigate }) {
       <div className="hero-copy">
         <p className="folio">NO. 001 · PERSONAL SYSTEM</p>
         <h1>{copy.title}</h1>
-        <p className="hero-translation">{copy.englishTitle}</p>
+        <p className="hero-meta">{copy.heroMeta}</p>
 
         <div className="definition">
           {copy.definition.map((line) => (
@@ -118,24 +115,13 @@ function Hero({ copy, onNavigate }) {
               onNavigate("essays");
             }}
           >
-            {copy.cta} / Explore Essays
+            {copy.cta}
             <ArrowRight aria-hidden="true" size={18} weight="regular" />
           </a>
-          <div className="social-links" aria-label="社交与联系方式">
+          <div className="social-links" aria-label={copy.socialLabel}>
             <a href="https://github.com/alxcy0712" target="_blank" rel="noreferrer">
               <GithubLogo aria-hidden="true" size={21} weight="regular" />
               GitHub
-              <ArrowUpRight aria-hidden="true" size={14} weight="regular" />
-            </a>
-            <a
-              href="#contact"
-              onClick={(event) => {
-                event.preventDefault();
-                onNavigate("about");
-              }}
-            >
-              <EnvelopeSimple aria-hidden="true" size={21} weight="regular" />
-              Gmail
               <ArrowUpRight aria-hidden="true" size={14} weight="regular" />
             </a>
           </div>
@@ -144,7 +130,12 @@ function Hero({ copy, onNavigate }) {
 
       <div className="machine-column">
         <Suspense fallback={<MachineFallback />}>
-          <WorldCompiler hint={copy.machineHint} expandedHint={copy.machineExpanded} />
+          <WorldCompiler
+            hint={copy.machineHint}
+            expandedHint={copy.machineExpanded}
+            loadingLabel={copy.machineLoading}
+            errorLabel={copy.machineError}
+          />
         </Suspense>
       </div>
     </section>
@@ -174,7 +165,7 @@ function ThoughtIndex({ copy, locale }) {
 function EssayQueue({ copy, locale }) {
   return (
     <section className="essay-queue" id="essays" aria-labelledby="queue-title">
-      <div className="section-kicker">NOTES · 2026</div>
+      <div className="section-kicker">{copy.sectionKicker}</div>
       <h2 id="queue-title">{copy.queueTitle}</h2>
       <div className="essay-list">
         {plannedEssays[locale].map(([number, title, topic]) => (
@@ -187,31 +178,6 @@ function EssayQueue({ copy, locale }) {
         ))}
       </div>
     </section>
-  );
-}
-
-function About({ copy }) {
-  return (
-    <section className="about-section" id="about" aria-labelledby="about-title">
-      <p>ABOUT / 关于</p>
-      <h2 id="about-title">{copy.aboutTitle}</h2>
-      <p className="about-body">{copy.aboutBody}</p>
-    </section>
-  );
-}
-
-function Footer({ copy }) {
-  return (
-    <footer className="site-footer" id="contact">
-      <p>{copy.footer}</p>
-      <div>
-        <a href="https://github.com/alxcy0712" target="_blank" rel="noreferrer">
-          GitHub
-        </a>
-        <span>Gmail · 发布前补充</span>
-      </div>
-      <p>2026 · VOL. 001</p>
-    </footer>
   );
 }
 
@@ -257,6 +223,14 @@ export function App() {
   const pointerStartRef = useRef(null);
   const copy = content[locale];
   const pageLabels = PAGE_LABELS[locale];
+
+  useEffect(() => {
+    document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
+    document.title = copy.documentTitle;
+    document
+      .querySelector('meta[name="description"]')
+      ?.setAttribute("content", copy.documentDescription);
+  }, [copy, locale]);
 
   const goToPage = useCallback((page, { updateHash = true } = {}) => {
     const requestedPage = typeof page === "number" ? page : PAGE_IDS.indexOf(page);
@@ -396,9 +370,7 @@ export function App() {
   const toggleLocale = () => {
     startTransition(() => {
       setLocale((current) => {
-        const nextLocale = current === "zh" ? "en" : "zh";
-        document.documentElement.lang = nextLocale === "zh" ? "zh-CN" : "en";
-        return nextLocale;
+        return current === "zh" ? "en" : "zh";
       });
     });
   };
@@ -426,7 +398,6 @@ export function App() {
       <Header
         activePage={activePage}
         copy={copy}
-        locale={locale}
         onNavigate={navigateToId}
         onToggleLocale={toggleLocale}
       />
@@ -473,21 +444,6 @@ export function App() {
           style={{ transform: `translate3d(0, ${(2 - activePage) * 100}%, 0)` }}
         >
           <EssayQueue copy={copy} locale={locale} />
-        </div>
-
-        <div
-          className="page-slide"
-          data-page-index="3"
-          data-page-state={activePage === 3 ? "active" : "after"}
-          data-wheel-target={wheelTargetPage === 3 ? "true" : undefined}
-          aria-hidden={activePage !== 3}
-          inert={activePage !== 3 && wheelTargetPage !== 3}
-          style={{ transform: `translate3d(0, ${(3 - activePage) * 100}%, 0)` }}
-        >
-          <div className="about-page">
-            <About copy={copy} />
-            <Footer copy={copy} />
-          </div>
         </div>
 
         <PageProgress
