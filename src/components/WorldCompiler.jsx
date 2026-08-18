@@ -21,12 +21,13 @@ function isSettled(value, velocity, target, epsilon = 0.001) {
   return Math.abs(target - value) < epsilon && Math.abs(velocity) < epsilon;
 }
 
-export default function WorldCompiler({ hint, expandedHint }) {
+export default function WorldCompiler({ hint, expandedHint, loadingLabel, errorLabel }) {
   const interactionRef = useRef(null);
   const stageRef = useRef(null);
   const pointerBoundsRef = useRef(null);
   const hoveredRef = useRef(false);
   const pointerTypeRef = useRef("");
+  const pointerStartRef = useRef(null);
   const motionRef = useRef({
     frame: 0,
     lastTime: 0,
@@ -237,15 +238,22 @@ export default function WorldCompiler({ hint, expandedHint }) {
       }}
       onPointerDown={(event) => {
         pointerTypeRef.current = event.pointerType;
+        pointerStartRef.current = { x: event.clientX, y: event.clientY };
       }}
       onPointerUp={(event) => {
-        if (event.pointerType === "touch" || event.pointerType === "pen") {
+        const start = pointerStartRef.current;
+        const isTap =
+          start &&
+          Math.hypot(event.clientX - start.x, event.clientY - start.y) <= 10;
+        if ((event.pointerType === "touch" || event.pointerType === "pen") && isTap) {
           setOpen(motionRef.current.progressTarget === 0);
         }
         pointerTypeRef.current = "";
+        pointerStartRef.current = null;
       }}
       onPointerCancel={() => {
         pointerTypeRef.current = "";
+        pointerStartRef.current = null;
         setOpen(false);
       }}
       onClick={(event) => {
@@ -285,7 +293,7 @@ export default function WorldCompiler({ hint, expandedHint }) {
 
       {assetState !== "ready" ? (
         <span className="machine-load-state" aria-hidden="true">
-          {assetState === "error" ? "WORLD COMPILER / RENDER ERROR" : "WORLD COMPILER / LOADING"}
+          {assetState === "error" ? errorLabel : loadingLabel}
         </span>
       ) : null}
     </button>
