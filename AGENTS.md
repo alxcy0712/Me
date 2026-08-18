@@ -30,3 +30,6 @@ When implementing from a selected generated mock, treat that image as the source
 - The shared React motion clock pauses offscreen, page-hidden, or under reduced motion. Reduced motion removes pointer-follow tilt and uses a stable compact presentation.
 - Rendering caps desktop DPR at 2 and mobile DPR at 1.5, renders only while an expansion or tilt spring is active, uses elapsed-time integration and no transmission pass, and targets at most 60 draw calls per frame. Three.js and its environment/geometry helpers remain dynamically imported outside the initial React bundle.
 - Visual constraints: premium editorial whitespace, restrained brass/glass/aluminum materials, no portraits, no neon AI palette, and no resume-style information density.
+- Page 02 is planned as a photorealistic, subtly retro Ubuntu laptop desktop. The five thought-index headings appear as desktop folders while “思考索引 / Index of thought” remains the page identity.
+- Page 02 desktop interactions follow familiar operating-system behavior: folders support selection and double-click opening, opened folders can be closed, and every visible core control provides a real response.
+- The 01↔02 and 02↔03 transitions use the laptop lid opening and closing as one continuous physical animation. Both segments remain interruptible and exactly reversible from the current pose and velocity.
