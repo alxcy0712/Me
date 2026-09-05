@@ -7,23 +7,27 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  GithubLogo,
-} from "@phosphor-icons/react";
-import { content, plannedEssays, topics } from "./content.js";
+import { ArrowRight, ArrowUpRight, GithubLogo } from "@phosphor-icons/react";
+import { content, plannedEssays } from "./content.js";
+import { usePageController } from "./hooks/usePageController.js";
 
 const WorldCompiler = lazy(() => import("./components/WorldCompiler.jsx"));
+const LaptopIndex = lazy(() => import("./components/LaptopIndex.jsx"));
 
 const PAGE_IDS = ["top", "index", "essays"];
 const PAGE_LABELS = {
   zh: ["封面", "思考索引", "文章"],
   en: ["Cover", "Index", "Essays"],
 };
-const PAGE_TRANSITION_MS = 760;
-const WHEEL_THRESHOLD = 48;
-const WHEEL_IDLE_MS = 240;
+
+function clamp(value, minimum = 0, maximum = 1) {
+  return Math.min(Math.max(value, minimum), maximum);
+}
+
+function smoothstep(value) {
+  const progress = clamp(value);
+  return progress * progress * (3 - 2 * progress);
+}
 
 function getInitialPage() {
   if (typeof window === "undefined") return 0;
@@ -91,21 +95,13 @@ function Hero({ copy, onNavigate }) {
         <p className="folio">NO. 001 · PERSONAL SYSTEM</p>
         <h1>{copy.title}</h1>
         <p className="hero-meta">{copy.heroMeta}</p>
-
         <div className="definition">
-          {copy.definition.map((line) => (
-            <span key={line}>{line}</span>
-          ))}
+          {copy.definition.map((line) => <span key={line}>{line}</span>)}
         </div>
-
         <div className="short-rule" aria-hidden="true" />
-
         <div className="context-copy">
-          {copy.context.map((line) => (
-            <span key={line}>{line}</span>
-          ))}
+          {copy.context.map((line) => <span key={line}>{line}</span>)}
         </div>
-
         <div className="hero-actions">
           <a
             className="primary-link"
@@ -127,7 +123,6 @@ function Hero({ copy, onNavigate }) {
           </div>
         </div>
       </div>
-
       <div className="machine-column">
         <Suspense fallback={<MachineFallback />}>
           <WorldCompiler
@@ -137,26 +132,6 @@ function Hero({ copy, onNavigate }) {
             errorLabel={copy.machineError}
           />
         </Suspense>
-      </div>
-    </section>
-  );
-}
-
-function ThoughtIndex({ copy, locale }) {
-  return (
-    <section className="thought-index" id="index" aria-labelledby="index-title">
-      <div className="index-heading">
-        <h2 id="index-title">{copy.indexTitle}</h2>
-        <p>{copy.indexSubtitle}</p>
-      </div>
-      <div className="topic-grid">
-        {topics[locale].map(([title, label, description]) => (
-          <article className="topic" key={title}>
-            <h3>{title}</h3>
-            <p className="topic-label">{label}</p>
-            <p className="topic-description">{description}</p>
-          </article>
-        ))}
       </div>
     </section>
   );
@@ -183,21 +158,14 @@ function EssayQueue({ copy, locale }) {
 
 function PageProgress({ activePage, labels, locale, onNavigate }) {
   return (
-    <nav
-      className="page-progress"
-      aria-label={locale === "zh" ? "章节导航" : "Section navigation"}
-    >
+    <nav className="page-progress" aria-label={locale === "zh" ? "章节导航" : "Section navigation"}>
       {labels.map((label, index) => (
         <button
           className="page-progress-button"
           type="button"
           key={PAGE_IDS[index]}
           aria-current={activePage === index ? "page" : undefined}
-          aria-label={
-            locale === "zh"
-              ? `前往第 ${index + 1} 页：${label}`
-              : `Go to page ${index + 1}: ${label}`
-          }
+          aria-label={locale === "zh" ? `前往第 ${index + 1} 页：${label}` : `Go to page ${index + 1}: ${label}`}
           onClick={() => onNavigate(PAGE_IDS[index])}
         >
           <span>{String(index + 1).padStart(2, "0")}</span>
@@ -209,253 +177,153 @@ function PageProgress({ activePage, labels, locale, onNavigate }) {
 }
 
 export function App() {
+  const initialPageRef = useRef(getInitialPage());
   const [locale, setLocale] = useState("zh");
-  const [activePage, setActivePage] = useState(getInitialPage);
-  const [wheelTargetPage, setWheelTargetPage] = useState(null);
-  const activePageRef = useRef(activePage);
-  const animationTimeoutRef = useRef(0);
-  const isAnimatingRef = useRef(false);
-  const reducedMotionRef = useRef(false);
-  const wheelAccumulatorRef = useRef(0);
-  const wheelDirectionRef = useRef(0);
-  const wheelTargetPageRef = useRef(null);
-  const wheelIdleTimeoutRef = useRef(0);
-  const pointerStartRef = useRef(null);
+  const [mountLaptop, setMountLaptop] = useState(initialPageRef.current === 1);
+  const heroSlideRef = useRef(null);
+  const essaySlideRef = useRef(null);
+  const viewportRef = useRef(null);
+  const laptopRef = useRef(null);
+  const pagePositionRef = useRef(initialPageRef.current);
+  const desktopLockedRef = useRef(false);
   const copy = content[locale];
   const pageLabels = PAGE_LABELS[locale];
 
   useEffect(() => {
     document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
     document.title = copy.documentTitle;
-    document
-      .querySelector('meta[name="description"]')
-      ?.setAttribute("content", copy.documentDescription);
+    document.querySelector('meta[name="description"]')?.setAttribute("content", copy.documentDescription);
   }, [copy, locale]);
 
-  const goToPage = useCallback((page, { updateHash = true } = {}) => {
-    const requestedPage = typeof page === "number" ? page : PAGE_IDS.indexOf(page);
-    if (requestedPage < 0) return false;
-    const nextPage = Math.min(Math.max(requestedPage, 0), PAGE_IDS.length - 1);
-    const nextHash = `#${PAGE_IDS[nextPage]}`;
-
-    if (updateHash && window.location.hash !== nextHash) {
-      window.history.replaceState(null, "", nextHash);
+  const renderFrame = useCallback((position, velocity) => {
+    pagePositionRef.current = position;
+    if (viewportRef.current) {
+      viewportRef.current.dataset.pagePosition = position.toFixed(4);
+      viewportRef.current.dataset.pageVelocity = velocity.toFixed(4);
     }
-    if (nextPage === activePageRef.current) return false;
-
-    activePageRef.current = nextPage;
-    setActivePage(nextPage);
-    window.clearTimeout(animationTimeoutRef.current);
-
-    if (reducedMotionRef.current) {
-      isAnimatingRef.current = false;
-    } else {
-      isAnimatingRef.current = true;
-      animationTimeoutRef.current = window.setTimeout(() => {
-        isAnimatingRef.current = false;
-      }, PAGE_TRANSITION_MS);
+    const heroProgress = clamp(position, 0, 1);
+    const essayProgress = clamp(position - 1, 0, 1);
+    if (heroSlideRef.current) {
+      const reveal = 1 - smoothstep(heroProgress / 0.58);
+      heroSlideRef.current.style.transform = `translate3d(0, ${(reveal - 1) * 100}%, 0)`;
+      heroSlideRef.current.style.opacity = String(reveal);
     }
-    return true;
+    if (essaySlideRef.current) {
+      const reveal = smoothstep((essayProgress - 0.42) / 0.58);
+      essaySlideRef.current.style.transform = `translate3d(0, ${(1 - reveal) * 100}%, 0)`;
+      essaySlideRef.current.style.opacity = String(reveal);
+    }
+    laptopRef.current?.setPose(position, velocity);
+  }, []);
+
+  const {
+    cancelPointer,
+    handlePointerDown,
+    handlePointerUp,
+    isMoving,
+    reducedMotion,
+    requestPage,
+    settledPage,
+    targetPage,
+    wheelTargetPage,
+  } = usePageController({
+    getInteractionLocked: () => desktopLockedRef.current,
+    initialPage: initialPageRef.current,
+    onFrame: renderFrame,
+    pageCount: PAGE_IDS.length,
+    pageIds: PAGE_IDS,
+  });
+
+  useEffect(() => {
+    if (isMoving || targetPage === 1 || settledPage === 1) setMountLaptop(true);
+  }, [isMoving, settledPage, targetPage]);
+
+  useEffect(() => {
+    // Prepare the second scene while the cover is idle, before the first swipe.
+    if (window.requestIdleCallback) {
+      const idle = window.requestIdleCallback(() => setMountLaptop(true), { timeout: 1200 });
+      return () => window.cancelIdleCallback(idle);
+    }
+    const timer = window.setTimeout(() => setMountLaptop(true), 400);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    const motionPreference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const updateMotionPreference = () => {
-      reducedMotionRef.current = motionPreference.matches;
-      if (motionPreference.matches) {
-        window.clearTimeout(animationTimeoutRef.current);
-        isAnimatingRef.current = false;
-      }
-    };
+    if (mountLaptop) laptopRef.current?.setPose(pagePositionRef.current, 0);
+  }, [mountLaptop]);
 
-    const resetWheelDelta = () => {
-      wheelAccumulatorRef.current = 0;
-      wheelDirectionRef.current = 0;
-    };
-
-    const endWheelGesture = () => {
-      resetWheelDelta();
-      if (wheelTargetPageRef.current === null) return;
-      wheelTargetPageRef.current = null;
-      setWheelTargetPage(null);
-    };
-
-    const handleWheel = (event) => {
-      if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-      event.preventDefault();
-
-      if (wheelTargetPageRef.current === null && event.target instanceof Element) {
-        const targetSlide = event.target.closest(".page-slide");
-        const targetPage = Number(targetSlide?.dataset.pageIndex);
-        if (Number.isInteger(targetPage)) {
-          wheelTargetPageRef.current = targetPage;
-          setWheelTargetPage(targetPage);
-        }
-      }
-
-      window.clearTimeout(wheelIdleTimeoutRef.current);
-      wheelIdleTimeoutRef.current = window.setTimeout(endWheelGesture, WHEEL_IDLE_MS);
-
-      if (isAnimatingRef.current) return;
-
-      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? window.innerHeight : 1;
-      const delta = event.deltaY * unit;
-      const direction = Math.sign(delta);
-      if (!direction) return;
-      if (direction !== wheelDirectionRef.current) {
-        wheelAccumulatorRef.current = 0;
-        wheelDirectionRef.current = direction;
-      }
-      wheelAccumulatorRef.current += delta;
-
-      if (Math.abs(wheelAccumulatorRef.current) < WHEEL_THRESHOLD) return;
-      resetWheelDelta();
-      goToPage(activePageRef.current + direction);
-    };
-
-    const handleKeyDown = (event) => {
-      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
-      if (event.target instanceof HTMLElement) {
-        if (event.target.closest("input, textarea, select, [contenteditable='true']")) return;
-        if (event.key === " " && event.target.closest("a, button")) return;
-      }
-
-      let nextPage;
-      if (["ArrowDown", "PageDown"].includes(event.key) || (event.key === " " && !event.shiftKey)) {
-        nextPage = activePageRef.current + 1;
-      } else if (["ArrowUp", "PageUp"].includes(event.key) || (event.key === " " && event.shiftKey)) {
-        nextPage = activePageRef.current - 1;
-      } else if (event.key === "Home") {
-        nextPage = 0;
-      } else if (event.key === "End") {
-        nextPage = PAGE_IDS.length - 1;
-      } else {
-        return;
-      }
-
-      event.preventDefault();
-      if (!isAnimatingRef.current) goToPage(nextPage);
-    };
-
-    const handleHistoryChange = () => {
-      const page = PAGE_IDS.indexOf(window.location.hash.slice(1));
-      if (page >= 0) goToPage(page, { updateHash: false });
-    };
-
-    updateMotionPreference();
-    motionPreference.addEventListener("change", updateMotionPreference);
-    window.addEventListener("wheel", handleWheel, { passive: false, capture: true });
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("hashchange", handleHistoryChange);
-    window.addEventListener("popstate", handleHistoryChange);
-
-    return () => {
-      window.clearTimeout(animationTimeoutRef.current);
-      window.clearTimeout(wheelIdleTimeoutRef.current);
-      motionPreference.removeEventListener("change", updateMotionPreference);
-      window.removeEventListener("wheel", handleWheel, true);
-      window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("hashchange", handleHistoryChange);
-      window.removeEventListener("popstate", handleHistoryChange);
-    };
-  }, [goToPage]);
-
-  const navigateToId = useCallback(
-    (pageId) => {
-      goToPage(pageId);
-    },
-    [goToPage],
-  );
+  const navigateToId = useCallback((pageId) => {
+    const page = typeof pageId === "number" ? pageId : PAGE_IDS.indexOf(pageId);
+    if (page >= 0) requestPage(page);
+  }, [requestPage]);
 
   const toggleLocale = () => {
-    startTransition(() => {
-      setLocale((current) => {
-        return current === "zh" ? "en" : "zh";
-      });
-    });
+    startTransition(() => setLocale((current) => (current === "zh" ? "en" : "zh")));
   };
 
-  const handlePointerDown = (event) => {
-    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
-    pointerStartRef.current = { x: event.clientX, y: event.clientY };
-  };
-
-  const handlePointerUp = (event) => {
-    const start = pointerStartRef.current;
-    pointerStartRef.current = null;
-    if (!start || isAnimatingRef.current) return;
-
-    const distanceX = event.clientX - start.x;
-    const distanceY = event.clientY - start.y;
-    if (Math.abs(distanceY) < 56 || Math.abs(distanceY) < Math.abs(distanceX) * 1.15) {
-      return;
-    }
-    goToPage(activePageRef.current + (distanceY < 0 ? 1 : -1));
-  };
+  const indicatedPage = isMoving ? targetPage : settledPage;
+  const laptopInteractive = settledPage === 1 && !isMoving;
 
   return (
-    <div className="site-shell">
-      <Header
-        activePage={activePage}
-        copy={copy}
-        onNavigate={navigateToId}
-        onToggleLocale={toggleLocale}
-      />
-
+    <div
+      className="site-shell"
+      data-page={indicatedPage}
+      data-reduced-motion={reducedMotion || undefined}
+    >
+      <Header activePage={indicatedPage} copy={copy} onNavigate={navigateToId} onToggleLocale={toggleLocale} />
       <main
+        ref={viewportRef}
         className="page-viewport"
+        data-moving={isMoving || undefined}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
-        onPointerCancel={() => {
-          pointerStartRef.current = null;
-        }}
+        onPointerCancel={cancelPointer}
       >
+        {mountLaptop ? (
+          <Suspense fallback={<div className="laptop-transition laptop-suspense" aria-hidden="true" />}>
+            <LaptopIndex
+              ref={laptopRef}
+              initialPosition={pagePositionRef.current}
+              interactive={laptopInteractive}
+              locale={locale}
+              reducedMotion={reducedMotion}
+              onInteractionLockChange={(locked) => {
+                desktopLockedRef.current = locked;
+              }}
+              onOpenEssays={() => navigateToId("essays")}
+              wheelTarget={wheelTargetPage === 1}
+            />
+          </Suspense>
+        ) : null}
+
         <div
-          className="page-slide"
+          ref={heroSlideRef}
+          className="page-slide page-slide-hero"
           data-page-index="0"
-          data-page-state={activePage === 0 ? "active" : "before"}
           data-wheel-target={wheelTargetPage === 0 ? "true" : undefined}
-          aria-hidden={activePage !== 0}
-          inert={activePage !== 0 && wheelTargetPage !== 0}
-          style={{ transform: `translate3d(0, ${-activePage * 100}%, 0)` }}
+          aria-hidden={settledPage !== 0}
+          inert={settledPage !== 0 && wheelTargetPage !== 0}
         >
           <Hero copy={copy} onNavigate={navigateToId} />
         </div>
 
         <div
-          className="page-slide"
-          data-page-index="1"
-          data-page-state={activePage === 1 ? "active" : activePage > 1 ? "before" : "after"}
-          data-wheel-target={wheelTargetPage === 1 ? "true" : undefined}
-          aria-hidden={activePage !== 1}
-          inert={activePage !== 1 && wheelTargetPage !== 1}
-          style={{ transform: `translate3d(0, ${(1 - activePage) * 100}%, 0)` }}
-        >
-          <ThoughtIndex copy={copy} locale={locale} />
-        </div>
-
-        <div
-          className="page-slide"
+          ref={essaySlideRef}
+          className="page-slide page-slide-essays"
           data-page-index="2"
-          data-page-state={activePage === 2 ? "active" : activePage > 2 ? "before" : "after"}
           data-wheel-target={wheelTargetPage === 2 ? "true" : undefined}
-          aria-hidden={activePage !== 2}
-          inert={activePage !== 2 && wheelTargetPage !== 2}
-          style={{ transform: `translate3d(0, ${(2 - activePage) * 100}%, 0)` }}
+          aria-hidden={settledPage !== 2}
+          inert={settledPage !== 2 && wheelTargetPage !== 2}
+          style={{ transform: `translate3d(0, ${(2 - initialPageRef.current) * 100}%, 0)` }}
         >
           <EssayQueue copy={copy} locale={locale} />
         </div>
 
-        <PageProgress
-          activePage={activePage}
-          labels={pageLabels}
-          locale={locale}
-          onNavigate={navigateToId}
-        />
+        <PageProgress activePage={indicatedPage} labels={pageLabels} locale={locale} onNavigate={navigateToId} />
         <p className="sr-only" aria-live="polite" aria-atomic="true">
           {locale === "zh"
-            ? `第 ${activePage + 1} 页，共 ${PAGE_IDS.length} 页：${pageLabels[activePage]}`
-            : `Page ${activePage + 1} of ${PAGE_IDS.length}: ${pageLabels[activePage]}`}
+            ? `第 ${settledPage + 1} 页，共 ${PAGE_IDS.length} 页：${pageLabels[settledPage]}`
+            : `Page ${settledPage + 1} of ${PAGE_IDS.length}: ${pageLabels[settledPage]}`}
         </p>
       </main>
     </div>
